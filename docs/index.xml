@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+      <title> ※ Vithor </title>
+      <link>https://vith0r.github.io</link>
+      <description>Últimas 10 notas on  ※ Vithor </description>
+      <generator>Quartz -- quartz.jzhao.xyz</generator>
+      <item>
+    <title>Fundamentos Malware</title>
+    <link>https://vith0r.github.io/Notas/MalDev/Fundamentos-Malware</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/Fundamentos-Malware</guid>
+    <description>Os três lados da moeda Toda moeda tem dois lados: Mas no universo da cibersegurança, especialmente quando falamos sobre malware, há um terceiro lado, o lado cinza.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>PEB Walk</title>
+    <link>https://vith0r.github.io/Notas/MalDev/PEB-Walk/PEB-Walk</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/PEB-Walk/PEB-Walk</guid>
+    <description>Evadindo IAT com PEB Walk Hoje em dia, se você usar direto as APIs do Windows (tipo VirtualAllocEx, CreateRemoteThread, etc.), seu binário vai ser cravado fácil por qualquer EDR ou AV mais decente.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Ransomware</title>
+    <link>https://vith0r.github.io/Notas/MalDev/Ransomware/Ransomware</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/Ransomware/Ransomware</guid>
+    <description>O Sequestro Digital Ransomware é um tipo de malware que transforma arquivos e sistemas inteiros em reféns digitais.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Spyware</title>
+    <link>https://vith0r.github.io/Notas/MalDev/Spyware/Spyware</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/Spyware/Spyware</guid>
+    <description>Espionagem Digital Spyware, ou trojan como alguns costumam chamar, é na minha opinião o melhor tipo de malware a ser utilizado.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Stealers</title>
+    <link>https://vith0r.github.io/Notas/MalDev/Stealers/Stealers</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/Stealers/Stealers</guid>
+    <description>Roubo Silencioso Stealers são malwares especializados em extrair informações confidenciais da vítima de forma rápida e quase invisível.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Reflective Dll Injection</title>
+    <link>https://vith0r.github.io/Notas/MalDev/sRDI/Reflective-DLL-Injection</link>
+    <guid>https://vith0r.github.io/Notas/MalDev/sRDI/Reflective-DLL-Injection</guid>
+    <description>O Eco de uma Era: A Persistência do Reflective Loader Imagine uma técnica tão engenhosa que, por mais de uma década, dominou o cenário da segurança ofensiva.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Adaptação_do_SDLC_-_HDLC</title>
+    <link>https://vith0r.github.io/Notas/Redes/Estudos/Adapta%C3%A7%C3%A3o_do_SDLC_-_HDLC</link>
+    <guid>https://vith0r.github.io/Notas/Redes/Estudos/Adapta%C3%A7%C3%A3o_do_SDLC_-_HDLC</guid>
+    <description>73-Adaptação do SDLC - HDLC Visão Geral O HDLC (High-Level Data Link Control) é um protocolo de enlace de dados (Camada 2) orientado a bits, síncrono, desenvolvido pela ISO (International Organization for Standardization) a partir do protocolo SDLC (Synchronous Data Link Control) da IBM.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Atenuação</title>
+    <link>https://vith0r.github.io/Notas/Redes/Estudos/Atenua%C3%A7%C3%A3o</link>
+    <guid>https://vith0r.github.io/Notas/Redes/Estudos/Atenua%C3%A7%C3%A3o</guid>
+    <description>21-Atenuação Visão Geral A atenuação é um fenômeno físico fundamental que descreve a perda de intensidade ou força de um sinal (seja ele elétrico, óptico ou de rádio) à medida que ele se propaga através de um meio de transmissão.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Barramento</title>
+    <link>https://vith0r.github.io/Notas/Redes/Estudos/Barramento</link>
+    <guid>https://vith0r.github.io/Notas/Redes/Estudos/Barramento</guid>
+    <description>72-Barramento Visão Geral Um barramento (bus, em inglês) é um subsistema de comunicação que transfere dados entre componentes dentro de um computador ou entre computadores.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item><item>
+    <title>Baud_e_Bps_–_Bits_por_Segundo</title>
+    <link>https://vith0r.github.io/Notas/Redes/Estudos/Baud_e_Bps_%E2%80%93_Bits_por_Segundo</link>
+    <guid>https://vith0r.github.io/Notas/Redes/Estudos/Baud_e_Bps_%E2%80%93_Bits_por_Segundo</guid>
+    <description>51-Baud e Bps – Bits por Segundo Visão Geral Baud e Bps (Bits por Segundo) são duas unidades de medida frequentemente confundidas, mas que representam conceitos distintos na transmissão de dados.</description>
+    <pubDate>Tue, 29 Jul 2025 07:24:59 GMT</pubDate>
+  </item>
+    </channel>
+  </rss>
