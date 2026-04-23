@@ -13,6 +13,7 @@
 <span class="post__date" data-astro-cid-jj6gr7j4>Tuesday, April 7, 2026</span> 
 &nbsp;|&nbsp;
 <span class="post__stats" data-astro-cid-jj6gr7j4>21 min read</span>  </h5> </div> <article class="prose dark:prose-invert text-justify hyphens-auto" data-astro-cid-apjhz64k>  <p>![[hytale-diagram-banner-3x.png| Hytale Malware Attack - Execution Chain]]</p>
+<hr>
 <h2 id="introdução">Introdução<a aria-hidden="true" tabindex="-1" href="#introdução"><span class="icon icon-link"></span></a></h2>
 <p>Em março de 2026, uma campanha direcionada à comunidade gamer de <strong>Hytale</strong> foi identificada por meio de análise de tráfego de rede. Os threat actors implantaram um domínio typosquatted que replicava o site oficial pixel por pixel, distribuindo um installer trojanizado disfarçado de <em>Hytale Launcher Setup</em> para explorar uma base de jogadores que aguardava ansiosamente o lançamento do título há anos.</p>
 <p>O que inicialmente parecia uma operação padrão de phishing revelou, após investigação mais profunda, uma cadeia de infecção em múltiplos estágios com sofisticação incomum. A campanha encadeia dois installers, trojaniza uma biblioteca Lua carregada via PE Import Table patching direto, executa PIC shellcode a partir da seção <code>.text</code> sem novas alocações de memória, oculta um payload Java via steganography dentro de um arquivo de imagem do jogo e o injeta diretamente na JVM por JNI, tudo dentro de um processo confiável, sem deixar artefatos em disco.</p>
@@ -27,11 +28,13 @@
 <li>Injeção JNI direta na JVM do processo <code>java-original.exe</code></li>
 <li>Descoberta inicial por comportamento anômalo de rede: <code>java-original.exe</code> mantendo conexão TCP em estado ESTABLISHED na porta 1336</li>
 </ul>
+<hr>
 <h2 id="descoberta">Descoberta<a aria-hidden="true" tabindex="-1" href="#descoberta"><span class="icon icon-link"></span></a></h2>
 <p>A investigação começou a partir de uma anomalia de tráfego de rede observada após a instalação do binário. O processo <code>java-original.exe</code> mantinha uma conexão TCP em estado ESTABLISHED em uma porta inesperada, comportamento que motivou uma inspeção mais profunda de toda a cadeia de instalação.</p>
 <p>A campanha emprega um domínio fraudulento registrado via <strong>typosquatting</strong> que replica a identidade visual da infraestrutura oficial para induzir vítimas a baixar um binário malicioso chamado <em>Hytale Launcher Setup</em>. Esse domínio é o primeiro ponto de contato da vítima com a campanha.</p>
 <p>![[Hytale-site.png| Typosquatted Hytale site]]</p>
 <p>Para maximizar as taxas de infecção, os atacantes removeram barreiras de fricção presentes no site legítimo. Seções de pagamento e fluxos de login foram removidos em favor de uma promessa de download direto “100% free”, reduzindo o tempo de avaliação da vítima e mantendo o engano visual desde a primeira interação.</p>
+<hr>
 <h2 id="vetor-inicial-de-infecção">Vetor inicial de infecção<a aria-hidden="true" tabindex="-1" href="#vetor-inicial-de-infecção"><span class="icon icon-link"></span></a></h2>
 <p>O vetor inicial de infecção consiste em um pacote de instalação que replica de forma muito próxima a interface e a identidade visual do installer legítimo do Hytale.</p>
 <p>![[installer-comparison.png | Original vs malicious installer]]</p>
@@ -41,11 +44,13 @@
 <p><strong>Stage 2 - Deploy de assets (Inno Setup).</strong> Depois que o primeiro estágio termina, a execução passa para <code>HytaleInstaller.exe</code> (1.2 GB). Esse componente usa <strong>Inno Setup</strong> para implantar um arquivo <code>Assets.zip</code> de 3.3 GB, contornando a limitação de tamanho do NSIS.</p>
 <p>![[inno-setup-stage2.png | Inno Setup second-stage installer]]</p>
 <p>Ao final, o installer cria um atalho na área de trabalho e inicia automaticamente <code>Hytale F2P Launcher.exe</code>. Essa arquitetura de installer duplo é uma abordagem deliberada para manter a interface fraudulenta enquanto gerencia o deploy de grandes volumes de dados no sistema que será comprometido em seguida.</p>
+<hr>
 <h2 id="a-fachada-f2p-do-hytale-sanhost">A fachada F2P do Hytale (SanHost)<a aria-hidden="true" tabindex="-1" href="#a-fachada-f2p-do-hytale-sanhost"><span class="icon icon-link"></span></a></h2>
 <p>O artefato malicioso usa o projeto <a href="https://git.sanhost.net/sanasol/f2p-evo/src/branch/master/README.md">open-source</a> <strong>Hytale F2P-EVO</strong> como fachada técnica. Originalmente hospedado no GitHub (<code>amiayweb/Hytale-F2P</code>) com mais de 500 stars, o projeto recebeu um <strong>DMCA Takedown</strong> da <strong>Hypixel Studios</strong> em fevereiro de 2026, resultando na remoção do repositório principal e de todos os 60+ forks sob alegações de pirataria e violação de copyright.</p>
 <p>![[dmca-takedown-notice.png | DMCA takedown notice]]</p>
 <p>Para contornar a ação legal, o projeto foi migrado para uma infraestrutura privada na <strong>SanHost</strong> (<code>sanhost.net</code>), mantendo seus próprios repositórios em <code>git.sanhost.net</code>. O repositório ainda estava publicamente acessível no momento desta análise.</p>
 <p>Ao embutir esse software funcional e legítimo, os atacantes adicionam uma camada de plausibilidade técnica ao artefato. Quando os usuários observam que o jogo e o launcher realmente funcionam, tendem a descartar alertas de segurança potenciais, permitindo que a cadeia de ataque opere em background sem impedimentos.</p>
+<hr>
 <h2 id="import-directory-modificada">Import Directory modificada<a aria-hidden="true" tabindex="-1" href="#import-directory-modificada"><span class="icon icon-link"></span></a></h2>
 <p>Depois que o fluxo de instalação termina, um atalho para o <code>Hytale Launcher</code> é criado na área de trabalho. Ao executar, a primeira anomalia fica visível imediatamente: o botão <strong>“Play”</strong> já está disponível sem nenhum download adicional. Esse comportamento indica que os assets do jogo foram pré-implantados durante o setup, motivando inspeção direta do diretório <code>\Client</code> em busca de modificações não documentadas.</p>
 <p>![[f2p-launcher-play-button.png | F2P Launcher with Play button available]]</p>
@@ -63,6 +68,7 @@
 <p>![[import-table-comparison.png | Import Directory Table comparison]]</p>
 <p>O mecanismo explorado aqui é o modelo de confiança do PE loader. Ao verificar a integridade de dependências, o sistema de proteção do Hytale consulta as entradas declaradas na Import Directory Table do executável. Como <code>luah54.dll</code> foi inserida diretamente nessa estrutura, ela é tratada como uma dependência legítima declarada pelo próprio binário, carregada pelo PE loader antes que qualquer checagem de integridade em nível de aplicação seja executada. O código malicioso entra no processo no mesmo nível de confiança de qualquer dependência oficial.</p>
 <p>Com o vetor de entrada estabelecido, a análise passa para o conteúdo da biblioteca injetada.</p>
+<hr>
 <h2 id="biblioteca-trojanizada---orquestração-de-código-nativo">Biblioteca trojanizada - Orquestração de código nativo<a aria-hidden="true" tabindex="-1" href="#biblioteca-trojanizada---orquestração-de-código-nativo"><span class="icon icon-link"></span></a></h2>
 <p>A análise de <code>luah54.dll</code> revelou uma abordagem sofisticada de ofuscação comportamental. O binário expõe 156 exports e 116 imports, contagens consistentes com um build completo da biblioteca oficial <strong>Lua</strong> compilada a partir do código-fonte da <a href="https://lua.org">lua.org</a>.</p>
 <p>Diferente de DLLs maliciosas típicas que apenas imitam o nome de uma biblioteca legítima, esta versão preserva todas as funções, símbolos e estruturas de uma biblioteca Lua real, tornando a detecção por análise estática de imports praticamente impossível.</p>
@@ -79,6 +85,7 @@
 <p>Dentro de <code>sub_180014230</code>, um loop <code>while(true)</code> monitora continuamente o sistema em busca do processo <code>java-original.exe</code>.</p>
 <p>![[dll-injection-loop.png | Process monitoring and DLL injection loop]]</p>
 <p>Quando o processo-alvo é localizado, o artefato executa <strong>DLL injection</strong>. O código aloca memória no address space de <code>java-original.exe</code>, escreve o path do payload e usa <code>CreateRemoteThread</code> para invocar <code>LoadLibraryA</code>, resultando no carregamento de <code>sqlite3.dll</code> no address space de <code>java-original.exe</code>.</p>
+<hr>
 <h2 id="pic-shellcode-na-seção-text">PIC shellcode na seção .text<a aria-hidden="true" tabindex="-1" href="#pic-shellcode-na-seção-text"><span class="icon icon-link"></span></a></h2>
 <p>Uma análise mais profunda de <code>sqlite3.dll</code> revelou um fluxo crítico de execução quase idêntico dentro de seu <code>DllMain</code>. O diagrama abaixo ilustra a call chain que leva à execução final do stager.</p>
 <p>![[dllmain-to-createthread.png | DllMain to CreateThread call chain]]</p>
@@ -88,6 +95,7 @@
 <p>Essa distinção é significativa quando comparada ao <strong>Reflective DLL Injection (RDI)</strong> de Stephen Fewer, amplamente adotado há mais de uma década. O RDI necessariamente cria uma nova região de memória <code>PRIVATE/MAPPED</code> com permissões excessivas, característica monitorada ativamente por praticamente todos os EDRs modernos. O método usado aqui executa shellcode dentro do address space já mapeado e com backing em <code>sqlite3.dll</code> no disco, tornando a região indistinguível de código legítimo para scanners baseados em atributos de memória.</p>
 <p>A detecção no VirusTotal também reflete esse perfil de evasão: <code>sqlite3.dll</code> foi sinalizada por 1/72 engines, com um único veredito genérico da Cynet.</p>
 <p>![[sqlite3-virustotal.png | VirusTotal detection for sqlite3.dll (1/72)]]</p>
+<hr>
 <h2 id="injeção-jni-e-steganography">Injeção JNI e steganography<a aria-hidden="true" tabindex="-1" href="#injeção-jni-e-steganography"><span class="icon icon-link"></span></a></h2>
 <p>Dando continuidade à análise do PIC shellcode, foi confirmado que o artefato não usa Import Address Table estática. Toda a resolução de APIs críticas é feita dinamicamente em runtime, comportamento esperado para Position-Independent Code.</p>
 <p>![[dynamic-api-resolution.png | Dynamic API resolution engine]]</p>
@@ -105,6 +113,7 @@
 <p>O processo <code>java-original.exe</code> carrega primeiro <code>sqlite3.dll</code>, seguido imediatamente por <code>GdiPlus.dll</code>. Ao examinar a call stack do evento de carregamento:</p>
 <p>![[loadlibrary-call-stack.png | LoadLibraryA call stack]]</p>
 <p>A call stack confirma que <code>sqlite3.dll</code> invocou <code>LoadLibraryA</code> para carregar <code>GdiPlus.dll</code>, exatamente como previsto pela análise estática do shellcode.</p>
+<hr>
 <h2 id="extração-de-memória-via-interceptação-do-ciclo-de-vida-do-gdi">Extração de memória via interceptação do ciclo de vida do GDI+<a aria-hidden="true" tabindex="-1" href="#extração-de-memória-via-interceptação-do-ciclo-de-vida-do-gdi"><span class="icon icon-link"></span></a></h2>
 <p>Para extrair o payload via steganography, foi implementada uma estratégia de interceptação dinâmica baseada no ciclo de vida do objeto GDI+. Ao monitorar chamadas de <code>gdiplus.dll</code>, foi determinado que o momento de maior integridade dos dados ocorre imediatamente antes da liberação dos recursos gráficos por <code>GdipDisposeImage</code>.</p>
 <p>O primeiro passo foi confirmar o carregamento das bibliotecas necessárias no processo, validando o contexto de execução.</p>
@@ -119,6 +128,7 @@
 <p>![[java-bytecode-dump.png | Assembled Java bytecode dump]]</p>
 <p>Ao posicionar o breakpoint em <code>GdipDisposeImage</code> imediatamente após a conclusão do loop de processamento de pixels, foi possível aguardar a finalização da rotina de extração e realizar o memory dump no momento exato em que o Java bytecode estava totalmente montado.</p>
 <p>Essa manobra foi essencial para neutralizar a rotina de autodestruição identificada no código do malware, que executa um <strong>secure wipe</strong> dos bytes em memória logo após o uso, projetada para impedir recuperação de artefatos.</p>
+<hr>
 <h2 id="vida-útil-do-payload-e-implicações-forenses">Vida útil do payload e implicações forenses<a aria-hidden="true" tabindex="-1" href="#vida-útil-do-payload-e-implicações-forenses"><span class="icon icon-link"></span></a></h2>
 <p>O que torna essa operação efetiva contra análise forense é a curta vida útil do payload em memória de dados bruta. Assim que o bytecode é entregue à JVM, o contexto de execução transita por três estágios.</p>
 <p><strong>Abstração da JVM.</strong> Quando a classe é registrada para execução, a JVM mapeia o bytecode bruto para estruturas internas de runtime. Nesse ponto, o buffer original de extração deixa de ser necessário para o fluxo normal de controle.</p>
@@ -126,6 +136,7 @@
 <p><strong>Evasão pós-execução.</strong> Em paralelo, o loader executa secure wipe do buffer de extração e de artefatos sensíveis de path/string.</p>
 <p>Como resultado, o malware permanece ativo dentro da JVM enquanto a visibilidade do analista sobre o artefato original de bytecode é significativamente reduzida. A classe não fica literalmente invisível, mas a janela de recuperação se torna muito estreita e altamente dependente de timing, com o payload pristine ainda preservado apenas dentro da imagem carrier de steganography nos assets do jogo.</p>
 <p>Sem o dump feito no intervalo preciso entre a montagem do buffer e a integração na JVM, a recuperação do artefato teria sido quase impossível.</p>
+<hr>
 <h2 id="análise-da-classe-java-extraída">Análise da classe Java extraída<a aria-hidden="true" tabindex="-1" href="#análise-da-classe-java-extraída"><span class="icon icon-link"></span></a></h2>
 <p>Após a extração bem-sucedida do arquivo <code>.class</code> da memória, a análise estática via decompilation revelou um cenário de <strong>ofuscação agressiva</strong>. O artefato emprega técnicas avançadas para impedir legibilidade do código e derrotar análise de control flow.</p>
 <p>![[skidfuscator-obfuscated-class.png | Skidfuscator-obfuscated Java class]]</p>
@@ -143,6 +154,7 @@
 <p>A solução envolve remoção manual dos <strong>trailing null bytes</strong> identificados por análise hexadecimal, restaurando o alinhamento correto do arquivo <code>.class</code>.</p>
 <p>Após o ajuste de alinhamento e a supressão de verificação, o payload foi validado e executado com sucesso.</p>
 <p>![[payload-execution-success.png | Successful payload execution]]</p>
+<hr>
 <h2 id="análise-em-sandbox-e-comunicação-c2">Análise em sandbox e comunicação C2<a aria-hidden="true" tabindex="-1" href="#análise-em-sandbox-e-comunicação-c2"><span class="icon icon-link"></span></a></h2>
 <p>A execução controlada da classe Java maliciosa em ambiente de sandbox permitiu observar o comportamento completo do payload, confirmando e expandindo as hipóteses levantadas durante a análise estática.</p>
 <p>A cadeia completa de instalação não foi executada diretamente dentro do ANY.RUN. Os pacotes originais de setup tinham vários gigabytes, os estágios posteriores dependiam de caminhos específicos em disco tanto para a DLL quanto para o payload em PNG, e o loader nativo esperava que o processo Java alvo tivesse o nome <code>java-original.exe</code>. O runtime Java disponibilizado pelo sandbox também era limitado ao Java 8, o que não era adequado para executar de forma confiável o estágio Java recuperado.</p>
@@ -163,6 +175,7 @@
 <p>![[c2-tcp-connections.png | C2 TCP connections]]</p>
 <p>A primeira conexão, para <code>172.66.171.73:443</code>, corresponde ao domínio <code>pastebin.com</code> via Cloudflare, provavelmente usada para recuperação de configuração ou stage de módulos adicionais. Como a conexão está criptografada em HTTPS, apenas o destino foi observável; a URL específica do Pastebin e seu conteúdo não puderam ser determinados a partir do tráfego capturado. A segunda conexão, para <code>212.64.210.140</code> na porta <code>1336</code>, está alocada ao ASN <strong>SUNUCUN</strong>, um provedor de hospedagem turco.</p>
 <p>Essa é a conexão C2 primária e constitui evidência de infraestrutura da campanha por meio de hospedagem na Turquia; isoladamente, esse dado não permite atribuição conclusiva a threat actors baseados na Turquia.</p>
+<hr>
 <h2 id="conclusão">Conclusão<a aria-hidden="true" tabindex="-1" href="#conclusão"><span class="icon icon-link"></span></a></h2>
 <p>Esta campanha demonstra um exemplo raro de engenharia de evasão holística. Cada técnica empregada existe para eliminar uma camada específica de detecção, culminando em execução Java totalmente fileless dentro de um processo de jogo confiável, onde distinguir código malicioso de execução legítima se torna significativamente mais difícil para memory scanners, EDRs e tooling forense.</p>
 <p>O PE Import Table patching neutraliza a verificação de integridade em nível de aplicação. A biblioteca Lua trojanizada fornece um contexto legítimo de execução para o stager. O PIC shellcode executando da seção <code>.text</code> evita os artefatos de alocação de memória que EDRs modernos monitoram. A steganography dentro de um asset oficial do jogo evita detecção por assinaturas em disco. A injeção JNI em uma JVM já em execução elimina artefatos de criação de processo. O wipe de bytecode pós-execução destrói a janela de evidência forense.</p>
