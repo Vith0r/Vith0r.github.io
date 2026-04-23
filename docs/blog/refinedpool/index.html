@@ -1,0 +1,504 @@
+<!DOCTYPE html><html lang="en" class="dark" data-astro-cid-jj6gr7j4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vithor | RefinedPool</title><meta name="title" content="Vithor | RefinedPool"><meta name="description" content="Como o RefinedPool elimina DLLs hardcoded ao injetar gadgets dinamicamente em code caves para evadir regras de call stack."><link rel="stylesheet" href="/assets/fonts.css"><link rel="stylesheet" href="/assets/about-2.css"><link rel="stylesheet" href="/assets/_slug_.css"><script>
+      const theme = (() => {
+        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+          return localStorage.getItem("theme");
+        }
+        return "dark";
+      })();
+
+      if (theme === "light") document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.add("dark");
+    </script><link rel="stylesheet" href="/_astro/_slug_@_@astro.BjJ6NIIH.css"></head> <body class="font-sans antialiased min-h-screen bg-gray-100 dark:bg-[#0f0f0f]" data-astro-cid-ylc345xr> <div class="site-single-outer" data-astro-cid-ylc345xr> <article class="site-single" data-astro-cid-ylc345xr> <div class="single-topbar" data-astro-cid-ylc345xr> <a href="javascript:history.back()" class="back-link" data-astro-cid-ylc345xr>← Back</a> <div class="single-topbar__right">  <button type="button" id="theme-toggle-single" aria-label="Toggle theme"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="5"></circle> <line x1="12" y1="1" x2="12" y2="3"></line> <line x1="12" y1="21" x2="12" y2="23"></line> <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line> <line x1="1" y1="12" x2="3" y2="12"></line> <line x1="21" y1="12" x2="23" y2="12"></line> <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line> </svg> </button> </div> </div> <div class="ruler-scrollbar svelte-xengn3" style="height: clamp(400px, 60vh, 85vh);"> <div class="ruler-track svelte-xengn3"></div> <div class="ruler-indicator svelte-xengn3" style="top: 0%;"> <span class="ruler-value svelte-xengn3">0.00</span> <div class="ruler-pointer svelte-xengn3"></div> </div> </div> <button class="toc-toggle svelte-1r6e6jk" aria-label="Toggle Table of Contents"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"> <line x1="5" y1="7" x2="19" y2="7"></line> <line x1="5" y1="12" x2="19" y2="12"></line> <line x1="5" y1="17" x2="19" y2="17"></line> </svg> </button> <div class="toc-overlay svelte-1r6e6jk" style="display: none;"></div> <div class="toc-sidebar svelte-1r6e6jk"> <div class="toc-header svelte-1r6e6jk"> <span class="toc-title svelte-1r6e6jk">Table of contents</span> <button class="close-btn svelte-1r6e6jk" aria-label="Close menu"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line> </svg> </button> </div> <div class="toc-content svelte-1r6e6jk"></div> <div class="toc-footer svelte-1r6e6jk"> <button class="action-btn text-primary svelte-1r6e6jk" data-action="expand">Expand all</button> <button class="action-btn svelte-1r6e6jk" data-action="collapse">Collapse all</button> <div class="h-divider svelte-1r6e6jk"></div> <button class="action-btn svelte-1r6e6jk" data-action="top">Back to top</button> <button class="action-btn svelte-1r6e6jk" data-action="bottom">Go to bottom</button> </div> </div> <div class="post__header" data-astro-cid-jj6gr7j4> <div class="post__tags" data-astro-cid-jj6gr7j4> <a class="post__tag" href="/blog" title="Exploit Development" data-astro-cid-jj6gr7j4>Exploit Development</a><a class="post__tag" href="/blog" title="Red Team" data-astro-cid-jj6gr7j4>Red Team</a><a class="post__tag" href="/blog" title="Malware" data-astro-cid-jj6gr7j4>Malware</a> </div> <h1 class="post__title" data-astro-cid-jj6gr7j4>RefinedPool</h1> <h5 class="post__desc" data-astro-cid-jj6gr7j4> <a class="post__author" href="https://github.com/vith0r" target="_blank" rel="external" data-astro-cid-jj6gr7j4>Vithor</a>
+&nbsp;|&nbsp;
+<span class="post__date" data-astro-cid-jj6gr7j4>Friday, February 20, 2026</span> 
+&nbsp;|&nbsp;
+<span class="post__stats" data-astro-cid-jj6gr7j4>6 min read</span>  </h5> </div> <article class="prose dark:prose-invert text-justify hyphens-auto" data-astro-cid-apjhz64k>  <p>![[image_paranoid.png| Paranoid Ninja]]</p>
+<p>Então esse post vai ser uma atualização do meu post anterior: <a href="https://vith0r.gitbook.io/public/malware-dev/posts/stack/carregamento-por-proxy">carregamento-por-proxy</a> onde eu mostrei a técnica do <strong>Paranoid Ninja</strong> de carregamento de dll por “proxy”, mas como já é de se esperar já existe regras para detectar esse tipo de técnica, eu já havia feito uso dessa técnica do paranoid ninja eu um projeto meu que foi o @@@, <a href="https://github.com/Vith0r/hell-code-loader/blob/main/hell-code-loader/Indirect.asm">Hell-Code-Loader</a> pois carregar a amsi.dll no processo de forma normal fazia com que o processo fosse detectado como malicioso, eu não pensei que tivesse algum outro projeto que aprimorasse essa técnica do paranoid ninja, e de fato, quando fiz o projeto ainda não havia, então a alguns dias eu me deparei com artigo: <a href="https://offsec.almond.consulting/evading-elastic-callstack-signatures.html">evading-elastic-callstack-signatures</a>, graças a um usuário aleatório do servidor do <a href="https://github.com/yurirdev">yurirdev</a> <a href="https://discord.com/invite/websec">link</a>:</p>
+<p>![[image-6.png]]</p>
+<p>Eu não pensei que esse projetinho iria virar um post, mas como estou pobre de ideias, melhor isso do que nada, então eu meio que realitizei em algumas partes desse post o meu proprio <strong>README</strong> do projeto então não estranhe.</p>
+<h2 id="trabalho-original">Trabalho Original<a aria-hidden="true" tabindex="-1" href="#trabalho-original"><span class="icon icon-link"></span></a></h2>
+<p>Basicamente o <a href="https://github.com/AlmondOffSec/LibTPLoadLib">trabalho/pesquisa</a> realizado pelo <a href="https://github.com/SAERXCIT">@SAERXCIT</a> possibilita adicionar mais um elemento a stack quebrando assim a rule de detecção, é bem simples de entender:</p>
+<p>A técnica original do <strong>LibTPLoadLib</strong> (detalhada <a href="https://offsec.almond.consulting/evading-elastic-callstack-signatures.html">neste post</a>) funciona assim:</p>
+<ul>
+<li>Usa callbacks do Thread Pool para fazer <em>proxy</em> de chamadas a <code>LoadLibraryA</code></li>
+<li>Aproveita um <em>call gadget</em> (<code>call r10; add rsp, 0x28; ret</code>) para remover a função de callback da call stack</li>
+</ul>
+<p><img src="https://offsec.almond.consulting/images/evading-elastic-callstack-signatures/callback2_0_diagram.png" alt="diagrama"></p>
+<ul>
+<li>Isso quebra o <a href="https://github.com/elastic/protections-artifacts/blob/6e9ee22c5a7f57b85b0cb063adba9a3c72eca348/behavior/rules/windows/defense_evasion_library_loaded_via_a_callback_function.toml">padrão de detecção do Elastic</a> que procura call stacks suspeitas durante o carregamento de bibliotecas</li>
+</ul>
+<p><strong>A abordagem original exigia:</strong></p>
+<ul>
+<li>Carregar uma DLL específica e hardcoded (<code>dsdmo_10.0.26100.1882.dll</code>) que contém o gadget</li>
+<li>A DLL precisava ser colocada manualmente em <code>C:\dsdmo_10.0.26100.1882.dll</code></li>
+<li>Isso cria uma dependência circular: carregar uma DLL suspeita para evadir a detecção de carregamento de DLLs</li>
+</ul>
+<p>Basicamente  eu vi isso mais como um obstáculo logo de começo, com todo o respeito ao dono original do projeto mas publicar um POC para mim é algo que quando você baixar, vou ter que apenas compilar e executar, mas não, você me obrigou a procurar DLLs que tivessem o gadget, no próprio README é escrito isso:</p>
+<p><strong>WARNING ⚠️</strong> : This project is not usable as-is. The call gadget used for this PoC is no longer available in current versions of Windows. You’ll have to find your own. <a href="https://offsec.almond.consulting/evading-elastic-callstack-signatures.html">Read the blogpost for more info</a>.</p>
+<p>Tudo bem, o cara é o dono do projeto, eu tenho mais é que agradeçer do que reclamar, mas então, na minha cabeça eu pensei assim, “então para carregar uma dll eu vou ter que já ter carregado na memoria do processo atual uma dll que já tenha o gadget necessario?” então eu pensei cara vamos escrever o gadget em um code cave existente em alguma dll já existente na memoria do processo, claro isso tem seus vários pontos negativos, você vai ter que escrever na memoria de outra dll já carregada no processo, mas a vida é assim não é mesmo?</p>
+<h2 id="inovação">”Inovação”<a aria-hidden="true" tabindex="-1" href="#inovação"><span class="icon icon-link"></span></a></h2>
+<p>Eu coloco entre aspas inovação pois, não inovei em nada sendo sincero, eu apenas eliminei a necessidade de DLLs externas, para fazer isso eu apenas fiz <strong>injeção dinâmica em code caves</strong>.</p>
+<p>Então em vez de procurar gadgets pré-existentes em DLLs hardcoded, o <a href="https://github.com/Vith0r/RefinedPool">RefinedPool</a>:</p>
+<ol>
+<li><strong>Enumera os módulos carregados</strong> no processo atual</li>
+<li><strong>Localiza code caves</strong> dentro de seções executáveis, especificamente:
+<ul>
+<li>Procura dentro dos limites de funções existentes usando o <em>Exception Directory</em> (<code>.pdata</code> / tabela <code>RUNTIME_FUNCTION</code>)</li>
+<li>Busca sequências contínuas de bytes nulos ou instruções INT3 (<code>0xCC</code>)</li>
+<li>Garante que a cave tenha pelo menos 10 bytes para comportar o gadget</li>
+</ul>
+</li>
+<li><strong>Escreve o gadget dinamicamente</strong> na code cave descoberta:
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#79B8FF">41</span><span style="color:#E1E4E8"> FF D2        </span><span style="color:#6A737D">; call r10</span></span>
+<span class="line"><span style="color:#79B8FF">33</span><span style="color:#E1E4E8"> C0           </span><span style="color:#6A737D">; xor eax, eax</span></span>
+<span class="line"><span style="color:#79B8FF">48</span><span style="color:#79B8FF"> 83</span><span style="color:#E1E4E8"> C4 </span><span style="color:#79B8FF">28</span><span style="color:#6A737D">     ; add rsp, 0x28</span></span>
+<span class="line"><span style="color:#E1E4E8">C3              </span><span style="color:#6A737D">; ret</span></span></code></pre>
+</li>
+<li><strong>Usa o gadget injetado</strong> no callback do Thread Pool, assim como na técnica original</li>
+</ol>
+<h2 id="vantagens">Vantagens<a aria-hidden="true" tabindex="-1" href="#vantagens"><span class="icon icon-link"></span></a></h2>
+<ul>
+<li><strong>Sem dependências de DLLs externas</strong>: funciona com módulos já carregados em memória</li>
+<li><strong>Mais furtivo</strong>: não há operações suspeitas de carregamento de DLL que possam disparar alertas</li>
+<li><strong>Mais prático</strong>: não depende de versões específicas do Windows nem de arquivos pré-posicionados</li>
+<li><strong>Adaptação dinâmica</strong>: pesquisa automaticamente em múltiplos módulos candidatos</li>
+<li><strong>Ciente de funções (<em>function-aware</em>)</strong>: prioriza posicionar gadgets dentro de limites legítimos de funções para “melhor furtividade”</li>
+</ul>
+<h2 id="resultado-na-call-stack">Resultado na Call Stack<a aria-hidden="true" tabindex="-1" href="#resultado-na-call-stack"><span class="icon icon-link"></span></a></h2>
+<p><img src="https://i.imgur.com/sluvimD.png" alt="resultado"></p>
+<p><img src="https://i.imgur.com/OPocl8J.png" alt="resultado_execucao_shellcode"></p>
+<h2 id="pic-shellcode">PIC Shellcode?<a aria-hidden="true" tabindex="-1" href="#pic-shellcode"><span class="icon icon-link"></span></a></h2>
+<p>Bom eu sou muito desatendo e percebi que o projeto que fiz fugia um pouco da “IDEIA” que os projetos originais buscavam, basicamente se lermos o readme do projeto <a href="https://github.com/AlmondOffSec/LibTPLoadLib">LibTPLoadLib</a> vamos ver que ele menciona o uso do <strong>Crystal Palace</strong>.</p>
+<p>O ponto que eu deixei passar é que o Crystal Palace é um linker especializado em criar <strong>PIC (Position-Independent Code)</strong> a partir de arquivos <strong>COFF</strong>. Ou seja:</p>
+<ul>
+<li>
+<p>Aqueles projetos foram feitos para serem <strong>bibliotecas (libs)</strong>.</p>
+</li>
+<li>
+<p>Eles são “peças” que você encaixa em um loader de shellcode maior.</p>
+</li>
+</ul>
+<p>Então é eu não segui esse padrão de “lib modular para linker de shellcode”, e só fui perceber depois, sou muito desatendo. Mas isso não quer dizer que o projeto não pode ser aprimorado para virar algo do tipo, então eu basicamente decidi fazer um POC apenas para mim, e gerei uma shellcode PIC do projeto em si, claro, tive que modificar “bastante” o código para conseguir fazer isso, no final eu consegui gerar a shellcode PIC do projeto:</p>
+<p>![[Drawing 2026-02-20 00.00.48.excalidraw 1.png]]</p>
+<p>Bom observando a print vemos que não muda quase nada kk, a diferença mesmo é que agora não foi executado uma SRDI, como na print anterior, então sim da para implementar deixar esse código PIC e não é nada difícil, só não vou publicar o PIC dele pois vou utilizar esse mesmo código para outro projeto futuro.</p>
+<p>Você pode olhar esse video para ver o uso da técnica e também para ver o uso de como ficaria o projeto caso fosse utilizado como uma shellcode pic:</p>
+<p><img src="https://youtu.be/Wc1keaCBuPI?si=V7ggncpYjbNw2ZgJ" alt="video"></p>
+<hr>
+<h2 id="agradecimentos">Agradecimentos<a aria-hidden="true" tabindex="-1" href="#agradecimentos"><span class="icon icon-link"></span></a></h2>
+<p>E é claro que eu tenho que deixar os meus mais sinceros agradecimentos ao: <a href="https://github.com/AlmondOffSec">@AlmondOffSec</a> / <a href="https://github.com/SAERXCIT">@SAERXCIT</a> pela pesquisa e implementação originais que tornaram este “aprimoramento” possível.</p>  </article> <div class="post__footer" data-astro-cid-jj6gr7j4> <div class="footer-grid" data-astro-cid-jj6gr7j4> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Published</span> <span class="footer-value" data-astro-cid-jj6gr7j4> February 20, 2026 </span> <span class="footer-subtext" data-astro-cid-jj6gr7j4>6 min read • 1188 words</span> </div> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Written By</span> <div class="footer-author" data-astro-cid-jj6gr7j4> <img class="footer-avatar" src="https://avatars.githubusercontent.com/u/124220594?v=4" alt="Vithor avatar" data-astro-cid-jj6gr7j4> <span class="footer-value" data-astro-cid-jj6gr7j4>Vithor</span> </div> </div> </div> </div> </article> </div> <script type="module" src="/assets/hoisted.js"></script> <script>(function(){const webAssetMap = {"drawing 2026-02-20 00.00.48.excalidraw 1.dkem-zja.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","drawing 2026-02-20 00.00.48.excalidraw 1.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","hytale-site.png":"/_astro/Hytale-site.WArzXDzQ.png","opocl8j.png":"/_astro/OPocl8J.DB4sm_Ju.png","pasted image 20260422174950.png":"/_astro/Pasted image 20260422174950.De5DijAk.png","pasted image 20260422174957.png":"/_astro/Pasted image 20260422174957.CLKWtQ_B.png","pasted image 20260422175306.png":"/_astro/Pasted image 20260422175306.DSgsY8-P.png","pasted image 20260422175329.png":"/_astro/Pasted image 20260422175329.B7LXNXbd.png","pasted image 20260422175412.png":"/_astro/Pasted image 20260422175412.BAng7CLU.png","pasted image 20260422175637.png":"/_astro/Pasted image 20260422175637.BW7lRa-0.png","pasted image 20260422175910.png":"/_astro/Pasted image 20260422175910.Bhdak3EL.png","pasted image 20260422175926.png":"/_astro/Pasted image 20260422175926.BDjP3UPN.png","pasted image 20260422180418.png":"/_astro/Pasted image 20260422180418.CHOMSox5.png","pasted image 20260422180434.png":"/_astro/Pasted image 20260422180434.DPCCixIR.png","anyrun-score.png":"/_astro/anyrun-score.DZZodPNl.png","c2-plugin-confirmation.png":"/_astro/c2-plugin-confirmation.D-Mg2rFb.png","c2-registration-beacon.png":"/_astro/c2-registration-beacon.aktermma.png","c2-tcp-connections.png":"/_astro/c2-tcp-connections.BjQ9zo7k.png","callback2_0_diagram.png":"/_astro/callback2_0_diagram.rlCLpWWO.png","classformat-error-duplicate.png":"/_astro/classformat-error-duplicate.BY8lZQFg.png","dll-injection-loop.png":"/_astro/dll-injection-loop.BFrvO5Ph.png","dllmain-to-beginthread.png":"/_astro/dllmain-to-beginthread.BabeDkB4.png","dllmain-to-createthread.png":"/_astro/dllmain-to-createthread.CfUkcik1.png","dmca-takedown-notice.png":"/_astro/dmca-takedown-notice.CHnmuelm.png","dynamic-api-resolution.png":"/_astro/dynamic-api-resolution.iyES2fPg.png","f2p-launcher-play-button.png":"/_astro/f2p-launcher-play-button.BZofspnP.png","gdip-dispose-breakpoint.png":"/_astro/gdip-dispose-breakpoint.BPyAOFhP.png","gdip-dispose-call-stack.png":"/_astro/gdip-dispose-call-stack.Cd1GIJSZ.png","gdiplus-steganography.png":"/_astro/gdiplus-steganography.BBZjfh_n.png","hytale-diagram-banner-3x.png":"/_astro/hytale-diagram-banner-3x.D9s6PuOs.png","hytale-game-running.png":"/_astro/hytale-game-running.D6qGXJpz.png","image-6.png":"/_astro/image-6.Cgr6oDif.png","image_paranoid.png":"/_astro/image_paranoid.BdhBf3mF.png","import-table-comparison.png":"/_astro/import-table-comparison.C2lEWbdu.png","inno-setup-stage2.png":"/_astro/inno-setup-stage2.DaUcjtEX.png","installer-comparison.png":"/_astro/installer-comparison.gzLwVWL7.png","integrity-verification-error.png":"/_astro/integrity-verification-error.P_3cswWq.png","invalid-digital-signature.png":"/_astro/invalid-digital-signature.rHxp6eSK.png","java-bytecode-dump.png":"/_astro/java-bytecode-dump.y3qZQxQT.png","jnativehook-globalscreen.png":"/_astro/jnativehook-globalscreen.CMqCTa4v.png","loadlibrary-call-stack.png":"/_astro/loadlibrary-call-stack.DZUZYJxc.png","luah54-string-references.png":"/_astro/luah54-string-references.BuRPMLzM.png","luah54-virustotal.png":"/_astro/luah54-virustotal.D1WZOXnk.png","malicious-file-artifacts.png":"/_astro/malicious-file-artifacts.BOLmsyMo.png","payload-execution-success.png":"/_astro/payload-execution-success.BGtaZ2Co.png","payload-register-state.png":"/_astro/payload-register-state.CdzXLJ6g.png","pic-shellcode-text-section.png":"/_astro/pic-shellcode-text-section.DaBjwcra.png","procmon-dll-loading.png":"/_astro/procmon-dll-loading.Cu8xfata.png","skidfuscator-ascii-art.png":"/_astro/skidfuscator-ascii-art.Cq9FiBTA.png","skidfuscator-obfuscated-class.png":"/_astro/skidfuscator-obfuscated-class.DbamIPKP.png","sluvimd.png":"/_astro/sluvimD.BLBHNB38.png","sqlite3-virustotal.png":"/_astro/sqlite3-virustotal.QiXrQqf2.png","stager-path-resolution.png":"/_astro/stager-path-resolution.CCe8M2pQ.png","steganography-carrier.png":"/_astro/steganography-carrier.CRwdqBav.png","trailing-null-bytes-removal.png":"/_astro/trailing-null-bytes-removal.ChhUIQwk.png","windbg-loaded-libraries.png":"/_astro/windbg-loaded-libraries.DZW-iomw.png"};
+
+      const WEB_ASSET_MAP = webAssetMap || {};
+
+      const resolveWebAsset = (rawName) => {
+        const key = (rawName || "").trim().toLowerCase();
+        if (!key) return "";
+        if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("/")) return rawName.trim();
+        return WEB_ASSET_MAP[key] || WEB_ASSET_MAP[key.replace(/^web\//, "")] || "";
+      };
+
+      const enhanceObsidianEmbeds = (root) => {
+        const nodes = Array.from(root.querySelectorAll("p"));
+        nodes.forEach((p) => {
+          if (p.closest(".inline-asset-row")) return;
+          const text = (p.textContent || "").trim();
+          const match = text.match(/^!\[\[(.+?)\]\]$/);
+          if (!match) return;
+
+          const payload = match[1];
+          const parts = payload.split("|");
+          const file = (parts[0] || "").trim();
+          const caption = (parts.slice(1).join("|") || "").trim();
+          const src = resolveWebAsset(file);
+          if (!src) return;
+
+          const figure = document.createElement("figure");
+          figure.className = "obsidian-embed";
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = caption || file;
+          img.loading = "lazy";
+          figure.appendChild(img);
+
+          if (caption) {
+            const cap = document.createElement("figcaption");
+            cap.textContent = caption;
+            figure.appendChild(cap);
+          }
+
+          p.replaceWith(figure);
+        });
+      };
+
+      const ensureImageModal = () => {
+        let overlay = document.getElementById("image-modal-overlay");
+        if (overlay) return overlay;
+
+        overlay = document.createElement("div");
+        overlay.id = "image-modal-overlay";
+        overlay.className = "image-modal-overlay";
+        overlay.innerHTML = '<div class="image-modal-card"><img class="image-modal-image" alt="Expanded media" /></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) overlay.classList.remove("open");
+        });
+
+        return overlay;
+      };
+
+      window.openImageModal = (src, alt = "image") => {
+        const overlay = ensureImageModal();
+        const img = overlay.querySelector("img");
+        if (!img) return;
+        img.src = src;
+        img.alt = alt;
+        overlay.classList.add("open");
+      };
+
+      window.copyCode = async (button) => {
+        const row = button.closest(".inline-asset-row");
+        const code = row?.querySelector("pre code")?.textContent ?? "";
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          const previous = button.textContent;
+          button.textContent = "[ COPIED ]";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch {
+          button.textContent = "[ FAILED ]";
+        }
+      };
+
+      const getImageFormat = (src) => {
+        const clean = src.split("?")[0].split("#")[0].toLowerCase();
+        const ext = clean.split(".").pop();
+        if (!ext || ext === clean) return "IMG";
+        if (ext === "jpeg") return "JPG";
+        return ext.toUpperCase();
+      };
+
+      const getYouTubeVideoId = (rawUrl) => {
+        try {
+          const url = new URL(rawUrl);
+          const host = url.hostname.replace(/^www\./, "").toLowerCase();
+          if (host === "youtu.be") {
+            return url.pathname.replace(/^\//, "").split("/")[0] || "";
+          }
+          if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+            if (url.pathname === "/watch") {
+              return url.searchParams.get("v") || "";
+            }
+            if (url.pathname.startsWith("/embed/")) {
+              return url.pathname.split("/embed/")[1]?.split("/")[0] || "";
+            }
+            if (url.pathname.startsWith("/shorts/")) {
+              return url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+            }
+          }
+        } catch {
+          return "";
+        }
+        return "";
+      };
+
+      const enhanceMarkdownCallouts = (root) => {
+        const validTypes = ["WARNING", "INFO", "BUG", "NOTE", "TIP"];
+        const iconByType = {
+          WARNING: "⚠",
+          INFO: "ℹ",
+          BUG: "🐞",
+          NOTE: "✎",
+          TIP: "✓",
+        };
+
+        const paragraphs = Array.from(root.querySelectorAll("p"));
+        paragraphs.forEach((p) => {
+          if (p.closest(".md-callout")) return;
+          const first = p.querySelector(":scope > strong");
+          if (!first) return;
+
+          const rawLabel = (first.textContent || "").trim();
+          const upper = rawLabel.toUpperCase();
+          const type = validTypes.find((t) => upper.includes(t));
+          if (!type) return;
+
+          const clone = p.cloneNode(true);
+          const strong = clone.querySelector("strong");
+          if (!strong) return;
+          strong.remove();
+
+          if (clone.firstChild && clone.firstChild.nodeType === Node.TEXT_NODE) {
+            clone.firstChild.textContent = clone.firstChild.textContent.replace(/^[\s\u00a0:：\-]+/, "");
+          }
+
+          const contentHtml = clone.innerHTML.trim();
+          if (!contentHtml) return;
+
+          const box = document.createElement("div");
+          box.className = `md-callout md-callout--${type.toLowerCase()}`;
+          box.innerHTML = `
+            <div class="md-callout__icon" aria-hidden="true">${iconByType[type] || "•"}</div>
+            <div class="md-callout__content"><p>${contentHtml}</p></div>
+          `;
+
+          p.replaceWith(box);
+        });
+      };
+
+      const enhanceMarkdownTables = (root) => {
+        const tables = Array.from(root.querySelectorAll("table"));
+        tables.forEach((table) => {
+          if (table.closest(".table-scroll")) return;
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-scroll";
+          table.parentNode?.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      };
+
+      const wrapWithSidecar = (target, desktopSidecar, mobileBar, rowClass, areaClass) => {
+        if (!target || target.closest(".inline-asset-row")) return null;
+        const row = document.createElement("div");
+        row.className = `inline-asset-row ${rowClass} group`;
+        const content = document.createElement("div");
+        content.className = `asset-content asset-area ${areaClass}`;
+        target.parentNode?.insertBefore(row, target);
+        row.appendChild(desktopSidecar);
+        row.appendChild(mobileBar);
+        row.appendChild(content);
+        content.appendChild(target);
+        return row;
+      };
+
+      const enhanceProseBlocks = (root) => {
+        const images = Array.from(root.querySelectorAll("img"));
+        images.forEach((img) => {
+          if (!img.src || img.closest(".inline-asset-row")) return;
+          const youtubeId = getYouTubeVideoId(img.src);
+          if (youtubeId) {
+            const captionText = (img.alt || "").trim();
+            const showCaption = captionText && captionText.toLowerCase() !== "video";
+
+            const figure = document.createElement("figure");
+            figure.className = "video-embed";
+
+            const frame = document.createElement("div");
+            frame.className = "video-embed__frame";
+            frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+            figure.appendChild(frame);
+
+            if (showCaption) {
+              const caption = document.createElement("figcaption");
+              caption.textContent = captionText;
+              figure.appendChild(caption);
+            }
+
+            const parent = img.parentElement;
+            if (parent && parent.tagName === "P" && parent.childElementCount === 1 && (parent.textContent || "").trim() === "") {
+              parent.replaceWith(figure);
+            } else {
+              img.replaceWith(figure);
+            }
+            return;
+          }
+
+          const host = img;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--image";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label">${getImageFormat(img.src)}</div>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          if (!img.dataset.zoomBound) {
+            img.dataset.zoomBound = "true";
+            img.style.cursor = "zoom-in";
+            img.addEventListener("click", (event) => {
+              event.preventDefault();
+              window.openImageModal(img.src, img.alt || "image");
+            });
+          }
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--image";
+          mobileBar.innerHTML = `
+            <span>${getImageFormat(img.src)}</span>
+            <span class="mobile-topbar__divider">|</span>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          wrapWithSidecar(host, sidecar, mobileBar, "image-wrapper inline-asset-row--image", "image-area");
+        });
+
+        const codeBlocks = Array.from(root.querySelectorAll("pre"));
+        codeBlocks.forEach((pre) => {
+          if (pre.closest(".inline-asset-row")) return;
+          const code = pre.querySelector("code")?.textContent ?? "";
+          const lines = code ? code.replace(/\n+$/, "").split("\n").length : 0;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--code";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label asset-sidecar__meta"><span>CODE</span><span class="asset-sidecar__divider">|</span><span>${lines}</span></div>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--code";
+          mobileBar.innerHTML = `
+            <span>CODE</span>
+            <span class="mobile-topbar__divider">|</span>
+            <span class="mobile-topbar__spacer">${lines}</span>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          wrapWithSidecar(pre, sidecar, mobileBar, "code-wrapper inline-asset-row--code", "code-area");
+        });
+      };
+
+      const initPostChrome = () => {
+        const root = document.querySelector(".prose");
+        const tocToggle = document.querySelector(".toc-toggle");
+        const tocOverlay = document.querySelector(".toc-overlay");
+        const tocSidebar = document.querySelector(".toc-sidebar");
+        const tocContent = document.querySelector(".toc-content");
+        const closeBtn = document.querySelector(".close-btn");
+        const themeBtn = document.getElementById("theme-toggle-single");
+        const ruler = document.querySelector(".ruler-scrollbar");
+        const rulerIndicator = document.querySelector(".ruler-indicator");
+        const rulerValue = document.querySelector(".ruler-value");
+
+        if (themeBtn && !themeBtn.dataset.bound) {
+          themeBtn.dataset.bound = "true";
+          themeBtn.addEventListener("click", () => {
+            const isDark = document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+          });
+        }
+
+        if (!root || !tocToggle || !tocOverlay || !tocSidebar || !tocContent || !closeBtn) return;
+
+        enhanceObsidianEmbeds(root);
+        enhanceMarkdownCallouts(root);
+        enhanceMarkdownTables(root);
+        enhanceProseBlocks(root);
+
+        const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+        tocContent.innerHTML = "";
+        let minLevel = 6;
+
+        const items = headings
+          .map((heading, index) => {
+            if (!heading.id) heading.id = `heading-${index}`;
+            const level = Number(heading.tagName.replace("H", ""));
+            if (level < minLevel) minLevel = level;
+            return { id: heading.id, text: heading.textContent?.trim() ?? "", level, heading };
+          })
+          .filter((item) => item.text.length > 0);
+
+        const setOpen = (isOpen) => {
+          tocSidebar.classList.toggle("open", isOpen);
+          tocToggle.classList.toggle("open", isOpen);
+          tocOverlay.style.display = isOpen ? "block" : "none";
+        };
+
+        tocToggle.onclick = () => setOpen(!tocSidebar.classList.contains("open"));
+        closeBtn.onclick = () => setOpen(false);
+        tocOverlay.onclick = () => setOpen(false);
+
+        items.forEach((item) => {
+          const node = document.createElement("div");
+          node.className = "toc-item svelte-1r6e6jk";
+          node.style.paddingLeft = `${(item.level - minLevel) * 1.5 + 1.5}rem`;
+          node.innerHTML = '<div class="toc-item-inner svelte-1r6e6jk"><span class="caret-placeholder svelte-1r6e6jk"></span><span class="toc-text svelte-1r6e6jk"></span></div>';
+          const textNode = node.querySelector(".toc-text");
+          if (textNode) textNode.textContent = item.text;
+          node.addEventListener("click", () => {
+            const top = item.heading.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top, behavior: "smooth" });
+            if (window.innerWidth < 1024) setOpen(false);
+          });
+          tocContent.appendChild(node);
+        });
+
+        const tocNodes = Array.from(tocContent.querySelectorAll(".toc-item"));
+
+        const updateActiveHeading = () => {
+          let activeId = "";
+          for (let i = items.length - 1; i >= 0; i -= 1) {
+            const rect = items[i].heading.getBoundingClientRect();
+            if (rect.top <= 120) {
+              activeId = items[i].id;
+              break;
+            }
+          }
+          if (!activeId && items.length) activeId = items[0].id;
+
+          tocNodes.forEach((node, i) => {
+            node.classList.toggle("active", items[i].id === activeId);
+          });
+        };
+
+        const updateRuler = () => {
+          if (!rulerIndicator || !rulerValue) return;
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = max > 0 ? window.scrollY / max : 0;
+          rulerIndicator.style.top = `${Math.max(0, Math.min(100, progress * 100))}%`;
+          rulerValue.textContent = progress.toFixed(2);
+          rulerValue.classList.add("visible");
+          clearTimeout(window.__rulerTimer);
+          window.__rulerTimer = setTimeout(() => rulerValue.classList.remove("visible"), 800);
+        };
+
+        const onScroll = () => {
+          updateActiveHeading();
+          updateRuler();
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+
+        if (ruler && !ruler.dataset.bound) {
+          ruler.dataset.bound = "true";
+          ruler.addEventListener("mousedown", (event) => {
+            const rect = ruler.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+            const top = ratio * (document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        }
+
+        document.querySelector('[data-action="top"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="bottom"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="expand"]')?.addEventListener("click", () => {
+          setOpen(true);
+        });
+        document.querySelector('[data-action="collapse"]')?.addEventListener("click", () => {
+          setOpen(false);
+        });
+
+        onScroll();
+      };
+
+      initPostChrome();
+      document.addEventListener("astro:page-load", initPostChrome);
+    })();</script> </body> </html>

