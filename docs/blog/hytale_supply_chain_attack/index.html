@@ -1,0 +1,802 @@
+<!DOCTYPE html><html lang="en" class="dark" data-astro-cid-jj6gr7j4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vithor | Hytale Supply Chain Attack</title><meta name="title" content="Vithor | Hytale Supply Chain Attack"><meta name="description" content="Análise completa de um ataque de supply chain contra a comunidade Hytale envolvendo typosquatting, esteganografia e injeção fileless na JVM."><link rel="stylesheet" href="/assets/fonts.css"><link rel="stylesheet" href="/assets/about-2.css"><link rel="stylesheet" href="/assets/_slug_.css"><script>
+      const theme = (() => {
+        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+          return localStorage.getItem("theme");
+        }
+        return "dark";
+      })();
+
+      if (theme === "light") document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.add("dark");
+    </script><link rel="stylesheet" href="/_astro/_slug_@_@astro.BjJ6NIIH.css"></head> <body class="font-sans antialiased min-h-screen bg-gray-100 dark:bg-[#0f0f0f]" data-astro-cid-ylc345xr> <div class="site-single-outer" data-astro-cid-ylc345xr> <article class="site-single" data-astro-cid-ylc345xr> <div class="single-topbar" data-astro-cid-ylc345xr> <a href="javascript:history.back()" class="back-link" data-astro-cid-ylc345xr>← Back</a> <div class="single-topbar__right"> <details class="lang-switch"> <summary class="lang-switch__trigger" aria-label="Select language"> <img class="lang-switch__flag-icon" src="/assets/flag-en.svg" alt="English" width="16" height="16"> <span class="lang-switch__caret">▾</span> </summary> <div class="lang-switch__menu" role="menu"> <a class="lang-switch__option lang-switch__option--active" href="/blog/hytale_supply_chain_attack" lang="en"> <img class="lang-switch__option-icon" src="/assets/flag-en.svg" alt="English" width="16" height="16"> <span>English</span> </a> <a class="lang-switch__option" href="/blog/hytale_supply_chain_attack_ptbr" lang="pt-BR"> <img class="lang-switch__option-icon" src="/assets/flag-pt.svg" alt="Portugues" width="16" height="16"> <span>Portugues</span> </a> </div> </details> <button type="button" id="theme-toggle-single" aria-label="Toggle theme"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="5"></circle> <line x1="12" y1="1" x2="12" y2="3"></line> <line x1="12" y1="21" x2="12" y2="23"></line> <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line> <line x1="1" y1="12" x2="3" y2="12"></line> <line x1="21" y1="12" x2="23" y2="12"></line> <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line> </svg> </button> </div> </div> <div class="ruler-scrollbar svelte-xengn3" style="height: clamp(400px, 60vh, 85vh);"> <div class="ruler-track svelte-xengn3"></div> <div class="ruler-indicator svelte-xengn3" style="top: 0%;"> <span class="ruler-value svelte-xengn3">0.00</span> <div class="ruler-pointer svelte-xengn3"></div> </div> </div> <button class="toc-toggle svelte-1r6e6jk" aria-label="Toggle Table of Contents"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"> <line x1="5" y1="7" x2="19" y2="7"></line> <line x1="5" y1="12" x2="19" y2="12"></line> <line x1="5" y1="17" x2="19" y2="17"></line> </svg> </button> <div class="toc-overlay svelte-1r6e6jk" style="display: none;"></div> <div class="toc-sidebar svelte-1r6e6jk"> <div class="toc-header svelte-1r6e6jk"> <span class="toc-title svelte-1r6e6jk">Table of contents</span> <button class="close-btn svelte-1r6e6jk" aria-label="Close menu"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line> </svg> </button> </div> <div class="toc-content svelte-1r6e6jk"></div> <div class="toc-footer svelte-1r6e6jk"> <button class="action-btn text-primary svelte-1r6e6jk" data-action="expand">Expand all</button> <button class="action-btn svelte-1r6e6jk" data-action="collapse">Collapse all</button> <div class="h-divider svelte-1r6e6jk"></div> <button class="action-btn svelte-1r6e6jk" data-action="top">Back to top</button> <button class="action-btn svelte-1r6e6jk" data-action="bottom">Go to bottom</button> </div> </div> <div class="post__header" data-astro-cid-jj6gr7j4> <div class="post__tags" data-astro-cid-jj6gr7j4> <a class="post__tag" href="/blog" title="Malware Analysis" data-astro-cid-jj6gr7j4>Malware Analysis</a><a class="post__tag" href="/blog" title="Threat Intelligence" data-astro-cid-jj6gr7j4>Threat Intelligence</a><a class="post__tag" href="/blog" title="Supply Chain Attack" data-astro-cid-jj6gr7j4>Supply Chain Attack</a> </div> <h1 class="post__title" data-astro-cid-jj6gr7j4>Hytale Supply Chain Attack</h1> <h5 class="post__desc" data-astro-cid-jj6gr7j4> <a class="post__author" href="https://x.com/m3mdump" target="_blank" rel="external" data-astro-cid-jj6gr7j4>Vithor</a>
+&nbsp;|&nbsp;
+<span class="post__date" data-astro-cid-jj6gr7j4>Tuesday, April 7, 2026</span> 
+&nbsp;|&nbsp;
+<span class="post__stats" data-astro-cid-jj6gr7j4>21 min read</span>  </h5> </div> <article class="prose dark:prose-invert text-justify hyphens-auto" data-astro-cid-apjhz64k>  <p>![[hytale-diagram-banner-3x.png| Hytale Malware Attack - Execution Chain]]</p>
+<h2 id="introduction">Introduction<a aria-hidden="true" tabindex="-1" href="#introduction"><span class="icon icon-link"></span></a></h2>
+<p>In March 2026, a campaign targeting the <strong>Hytale</strong> gaming community was identified through network traffic analysis. Threat actors deployed a typosquatted domain replicating the official site pixel by pixel, distributing a trojanized installer disguised as <em>Hytale Launcher Setup</em> to exploit a player base that has been eagerly awaiting the title’s release for years.</p>
+<p>What initially appeared to be a standard phishing operation revealed, upon deeper investigation, a multi-stage infection chain of unusual sophistication. The campaign chains two installers, trojanizes a Lua library loaded via direct PE Import Table patching, executes PIC shellcode from within the <code>.text</code> section without new memory allocations, hides a Java payload via steganography inside a game image file, and injects it directly into the JVM through JNI, all within a trusted process, leaving no artifacts on disk.</p>
+<p>This report documents the full execution chain, the evasion techniques employed, and the indicators of compromise identified during the investigation.</p>
+<h2 id="key-takeaways">Key Takeaways<a aria-hidden="true" tabindex="-1" href="#key-takeaways"><span class="icon icon-link"></span></a></h2>
+<ul>
+<li>Supply chain attack via typosquatting targeting a specific gaming community</li>
+<li>Dual-installer architecture (NSIS + Inno Setup) replicating the legitimate installation flow</li>
+<li>PE Import Table patching on <code>HytaleClient.exe</code> to force loading of a trojanized Lua library</li>
+<li>PIC shellcode embedded in the <code>.text</code> section with no additional memory allocation</li>
+<li>Steganography applied to an official game image to conceal a heavily obfuscated Java class</li>
+<li>Direct JNI injection into the JVM of the <code>java-original.exe</code> process</li>
+<li>Initial discovery through anomalous network behavior: <code>java-original.exe</code> maintaining a TCP connection in ESTABLISHED state on port 1336</li>
+</ul>
+<h2 id="discovery">Discovery<a aria-hidden="true" tabindex="-1" href="#discovery"><span class="icon icon-link"></span></a></h2>
+<p>The investigation started from a network traffic anomaly observed after installing the binary. The process <code>java-original.exe</code> was maintaining a TCP connection in ESTABLISHED state on an unexpected port, a behavior that prompted deeper inspection of the entire installation chain.</p>
+<p>The campaign employs a fraudulent domain registered through <strong>typosquatting</strong> that replicates the visual identity of the official infrastructure to lure victims into downloading a malicious binary named <em>Hytale Launcher Setup</em>. This domain is the victim’s first point of contact with the campaign.</p>
+<p>![[Hytale-site.png| Typosquatted Hytale site]]</p>
+<p>To maximize infection rates, the attackers removed friction barriers present on the legitimate site. Payment sections and login flows were stripped out in favor of a direct “100% free” download promise, reducing the victim’s evaluation time and maintaining the visual deception from the very first interaction.</p>
+<h2 id="initial-infection-vector">Initial Infection Vector<a aria-hidden="true" tabindex="-1" href="#initial-infection-vector"><span class="icon icon-link"></span></a></h2>
+<p>The initial infection vector consists of an installation package that closely replicates the interface and visual identity of the legitimate Hytale installer.</p>
+<p>![[installer-comparison.png | Original vs malicious installer]]</p>
+<p>The initial binary, identified by SHA256 <code>9229e9cf6e19ec75c2bd8dd7faa373bf074e54d44880a1ba339e6e55f2b1ed77</code>, was built using <strong>NSIS (Nullsoft Scriptable Install System)</strong>, a legitimate open-source installer framework commonly abused by threat actors for malware packaging.</p>
+<p>The operation proceeds through a multi-stage execution structure designed both to overcome file size limitations and to fragment the malicious context across distinct components, complicating isolated analysis of each stage.</p>
+<p><strong>Stage 1 - Interface and Configuration (NSIS).</strong> The 1.6 GB initial binary manages the graphical interface and deploys the launcher executables into <code>%AppData%\Roaming</code>. NSIS is chosen for this stage specifically to replicate the original assets (banners, icons), circumventing user suspicion. However, NSIS is technically limited to packages under ~2 GB.</p>
+<p><strong>Stage 2 - Asset Deployment (Inno Setup).</strong> After the first stage completes, execution passes to <code>HytaleInstaller.exe</code> (1.2 GB). This component uses <strong>Inno Setup</strong> to deploy a 3.3 GB <code>Assets.zip</code> file, working around the NSIS size limitation.</p>
+<p>![[inno-setup-stage2.png | Inno Setup second-stage installer]]</p>
+<p>Upon completion, the installer creates a desktop shortcut and automatically launches <code>Hytale F2P Launcher.exe</code>. This dual-installer architecture is a deliberate approach to maintain the fraudulent interface while managing the deployment of large data volumes onto the system that will subsequently be compromised.</p>
+<h2 id="the-f2p-hytale-facade-sanhost">The F2P Hytale Facade (SanHost)<a aria-hidden="true" tabindex="-1" href="#the-f2p-hytale-facade-sanhost"><span class="icon icon-link"></span></a></h2>
+<p>The malicious artifact uses the <a href="https://git.sanhost.net/sanasol/f2p-evo/src/branch/master/README.md">open-source</a> <strong>Hytale F2P-EVO</strong> project as a technical facade. Originally hosted on GitHub (<code>amiayweb/Hytale-F2P</code>) with over 500 stars, the project received a <strong>DMCA Takedown</strong> from <strong>Hypixel Studios</strong> in February 2026, resulting in the removal of the main repository and all 60+ forks under piracy and copyright infringement claims.</p>
+<p>![[dmca-takedown-notice.png | DMCA takedown notice]]</p>
+<p>To circumvent the legal action, the project was migrated to a private infrastructure at <strong>SanHost</strong> (<code>sanhost.net</code>), maintaining its own repositories at <code>git.sanhost.net</code>. The repository was still publicly accessible at the time of this analysis.</p>
+<p>By embedding this functional, legitimate software, the attackers add a layer of technical plausibility to the artifact. When users observe that the game and launcher actually work, they tend to dismiss potential security warnings, allowing the attack chain to operate in the background unimpeded.</p>
+<h2 id="modified-import-directory">Modified Import Directory<a aria-hidden="true" tabindex="-1" href="#modified-import-directory"><span class="icon icon-link"></span></a></h2>
+<p>After the installation flow completes, a shortcut for the <code>Hytale Launcher</code> is created on the desktop. Upon execution, the first anomaly is immediately visible: the <strong>“Play”</strong> button is already available without any additional downloads. This behavior indicates that the game assets were pre-deployed during the setup process, prompting direct inspection of the <code>\Client</code> directory for undocumented modifications.</p>
+<p>![[f2p-launcher-play-button.png | F2P Launcher with Play button available]]</p>
+<p>Upon clicking Play, the game launches and runs normally, reinforcing the perception of a legitimate installation.</p>
+<p>![[hytale-game-running.png | Hytale game running]]</p>
+<p>Investigation of the <code>\Client</code> directory revealed the executable <code>HytaleClient.exe</code>. While the binary displays a digital signature issued by <em>Hypixel Studios Canada Inc</em> using SHA256 with an SSL.com timestamp countersignature, Windows marks the signature as <strong>invalid</strong>.</p>
+<p>![[invalid-digital-signature.png | Invalid digital signature on HytaleClient.exe]]</p>
+<blockquote>
+<p><strong>Analysis Note:</strong> The original F2P-EVO project also invalidates the signature as part of its authentication bypass modifications. However, the version distributed by this campaign introduces additional artifacts that are absent from the official SanHost repository, confirming that the modifications extend beyond the scope of the legitimate fork.</p>
+</blockquote>
+<p>Unlike the structure found in either the legitimate launcher or the original SanHost fork, two suspicious dynamic libraries were identified in the client root directory, specifically <code>sqlite3.dll</code> and <code>luah54.dll</code>.</p>
+<p>Their presence is notable because of Hytale’s native protection system. The game implements integrity verification that, upon detecting discrepancies in dynamic libraries or DLL Proxying attempts, terminates execution with the error <strong>“Identity token signature verification failed”</strong>.</p>
+<p>![[integrity-verification-error.png | Integrity verification error]]</p>
+<p>To bypass this barrier, the attackers went beyond DLL Search Order Hijacking. They applied <strong>PE Import Table patching</strong> directly on <code>HytaleClient.exe</code>, physically modifying the binary structure to declare <code>luah54.dll</code> as a known legitimate dependency to the Windows PE loader.</p>
+<p>![[import-table-comparison.png | Import Directory Table comparison]]</p>
+<p>The mechanism exploited here is the PE loader’s trust model. When verifying dependency integrity, Hytale’s protection system queries entries declared in the executable’s Import Directory Table. Since <code>luah54.dll</code> was inserted directly into this structure, it is treated as a legitimate dependency declared by the binary itself, loaded by the PE loader before any application-level integrity check can execute. The malicious code enters the process at the same trust level as any official dependency.</p>
+<p>With the entry vector established, the analysis moves to the content of the injected library.</p>
+<h2 id="trojanized-library---native-code-orchestration">Trojanized Library - Native Code Orchestration<a aria-hidden="true" tabindex="-1" href="#trojanized-library---native-code-orchestration"><span class="icon icon-link"></span></a></h2>
+<p>Analysis of <code>luah54.dll</code> revealed a sophisticated behavioral obfuscation approach. The binary exposes 156 exports and 116 imports, counts consistent with a full build of the official <strong>Lua</strong> library compiled from <a href="https://lua.org">lua.org</a> source code.</p>
+<p>Unlike typical malicious DLLs that merely imitate a legitimate library name, this version preserves all the functions, symbols, and structures of a real Lua library, making detection through static import analysis nearly impossible.</p>
+<p>VirusTotal detection at the time of analysis reinforces this assessment: <code>luah54.dll</code> was flagged by 0/72 engines.</p>
+<p>![[luah54-virustotal.png | VirusTotal detection for luah54.dll (0/72)]]</p>
+<p>Evidence of the next stage in the chain was found through a string search within <code>luah54.dll</code> itself.</p>
+<p>![[luah54-string-references.png | String references in luah54.dll]]</p>
+<p>The search for <code>sqlite3</code> reveals two relevant entries, the direct reference <code>sqlite3.dll</code> and the full hardcoded path to the payload. This path is the link connecting the two chain stages, the exact address from which <code>luah54.dll</code> will load the next malicious component into the target process.</p>
+<p>Within the <code>DllMain</code>, on processing the <code>DLL_PROCESS_ATTACH</code> event, the <code>dllmain_dispatch</code> function redirects execution to <code>sub_180014200</code>. This function spawns the stager routine in a separate thread via <code>_beginthread</code>.</p>
+<p>![[dllmain-to-beginthread.png | DllMain to _beginthread execution flow]]</p>
+<p>Once executed, the thread invokes the malicious subroutine <code>sub_180014230</code>.</p>
+<p>![[stager-path-resolution.png | sub_180014230 path resolution]]</p>
+<p>This function retrieves the <code>%APPDATA%</code> path, constructs the full path to <code>sqlite3.dll</code> using the hardcoded path identified earlier, and copies the string <code>java-original.exe</code> as the target process name. Resolution of <code>LoadLibraryA</code> is performed dynamically via <code>GetProcAddress</code> on <code>KERNEL32.DLL</code>, preventing the function name from appearing in the DLL’s static Import Address Table.</p>
+<p>Inside <code>sub_180014230</code>, a <code>while(true)</code> loop continuously monitors the system for the <code>java-original.exe</code> process.</p>
+<p>![[dll-injection-loop.png | Process monitoring and DLL injection loop]]</p>
+<p>Once the target process is located, the artifact performs <strong>DLL injection</strong>. The code allocates memory within the address space of <code>java-original.exe</code>, writes the payload path, and uses <code>CreateRemoteThread</code> to invoke <code>LoadLibraryA</code>, resulting in the loading of <code>sqlite3.dll</code> into the address space of <code>java-original.exe</code>.</p>
+<h2 id="pic-shellcode-in-the-text-section">PIC Shellcode in the .text Section<a aria-hidden="true" tabindex="-1" href="#pic-shellcode-in-the-text-section"><span class="icon icon-link"></span></a></h2>
+<p>Deeper analysis of <code>sqlite3.dll</code> revealed a nearly identical critical execution flow within its <code>DllMain</code>. The diagram below illustrates the call chain leading to the final stager execution.</p>
+<p>![[dllmain-to-createthread.png | DllMain to CreateThread call chain]]</p>
+<p>The flow converges at <code>sub_180106840</code>, which uses <code>CreateThread</code> to spawn a new execution thread. The critical technical detail lies in its entry point, <code>sub_180001000</code>, which corresponds exactly to the start address of the binary’s <code>.text</code> section (<code>0x180001000</code>).</p>
+<p>![[pic-shellcode-text-section.png | PIC shellcode at .text section start]]</p>
+<p>This approach is strategic. By pointing the thread directly to code already present in the <code>.text</code> section, the artifact executes <strong>Position-Independent Code (PIC) shellcode</strong> without requiring new memory allocations, without needing APIs like <code>VirtualAllocEx</code> and eliminating the creation of <code>PRIVATE/RWX</code> unbacked memory regions, which are the primary target of modern memory scanners and EDR solutions.</p>
+<p>This distinction is significant when compared to Stephen Fewer’s <strong>Reflective DLL Injection (RDI)</strong>, which has been widely adopted for over a decade. RDI necessarily creates a new <code>PRIVATE/MAPPED</code> memory region with excessive permissions, a characteristic that virtually all modern EDRs actively monitor. The method used here executes shellcode within the already-mapped address space backed by <code>sqlite3.dll</code> on disk, rendering the region indistinguishable from legitimate code to scanners based on memory attributes.</p>
+<p>VirusTotal detection also reflects this evasion profile: <code>sqlite3.dll</code> was flagged by 1/72 engines, with a single generic Cynet verdict.</p>
+<p>![[sqlite3-virustotal.png | VirusTotal detection for sqlite3.dll (1/72)]]</p>
+<h2 id="jni-injection-and-steganography">JNI Injection and Steganography<a aria-hidden="true" tabindex="-1" href="#jni-injection-and-steganography"><span class="icon icon-link"></span></a></h2>
+<p>Continuing the PIC shellcode analysis, it was confirmed that the artifact does not use a static Import Address Table. All critical API resolution is performed dynamically at runtime, expected behavior for Position-Independent Code.</p>
+<p>![[dynamic-api-resolution.png | Dynamic API resolution engine]]</p>
+<p>The routine <code>sub_180001024</code> serves as the symbol resolution engine, mapping critical functions from <code>kernel32.dll</code> and Java libraries. Among the resolved APIs, the following stand out: <code>VirtualAlloc</code> and <code>VirtualFree</code> for memory manipulation, <code>LoadLibraryA</code>, <code>GetProcAddress</code>, and <code>FreeLibrary</code> for module loading, and <code>GetEnvironmentVariableW</code> alongside <code>JNI_GetCreatedJavaVMs</code> for Java interaction.</p>
+<p>The presence of <code>JNI_GetCreatedJavaVMs</code> confirms the artifact’s final objective, which is to locate and infiltrate active Java Virtual Machine instances within the host process. In this same routine, the shellcode also references the full hardcoded path to the image file used for steganography:</p>
+<p><code>sanasol\f2p-evo\data\games\15faf9c0-7369-49c9-bc52-7dffb78de983\Client\Data\Game\Interface\MainMenu\5e7a961d5e334000189a2a78_6.png</code></p>
+<p>Further into the shellcode, one of the most sophisticated aspects of this sample was identified. The routine <code>sub_1800025db</code> uses steganography to conceal the final stage, loading <code>gdiplus.dll</code> to process the referenced image file.</p>
+<p>![[gdiplus-steganography.png | GDI+ resolution for steganography]]</p>
+<p>The routine resolves and uses the following GDI+ functions: <code>GdiplusStartup</code>, <code>GdiplusShutdown</code>, <code>GdipCreateBitmapFromFile</code>, <code>GdipGetImageWidth</code>, <code>GdipGetImageHeight</code>, and <code>GdipBitmapGetPixel</code>.</p>
+<p>The processed file is not a generic container crafted by the attackers. It is <code>5e7a961d5e334000189a2a78_6.png</code>, official Hytale artwork used in the game’s main menu interface.</p>
+<p>![[steganography-carrier.png | Steganography carrier image]]</p>
+<p>This image-as-a-container technique prevents the payload from being detected by disk-based signatures, since the malicious data is encoded within the pixel color structure of a PNG, indistinguishable from legitimate visual content.</p>
+<p>Monitoring the DLL loading flow in the <code>java-original.exe</code> process via <strong>Process Monitor</strong> confirmed the expected loading sequence.</p>
+<p>![[procmon-dll-loading.png | DLL loading sequence in Process Monitor]]</p>
+<p>The process <code>java-original.exe</code> loads <code>sqlite3.dll</code> first, followed immediately by <code>GdiPlus.dll</code>. Examining the call stack of the loading event:</p>
+<p>![[loadlibrary-call-stack.png | LoadLibraryA call stack]]</p>
+<p>The call stack confirms that <code>sqlite3.dll</code> invoked <code>LoadLibraryA</code> to load <code>GdiPlus.dll</code>, exactly as predicted by the static analysis of the shellcode.</p>
+<h2 id="memory-extraction-via-gdi-lifecycle-interception">Memory Extraction via GDI+ Lifecycle Interception<a aria-hidden="true" tabindex="-1" href="#memory-extraction-via-gdi-lifecycle-interception"><span class="icon icon-link"></span></a></h2>
+<p>To extract the payload via steganography, a dynamic interception strategy based on the GDI+ object lifecycle was implemented. By monitoring <code>gdiplus.dll</code> calls, it was determined that the moment of highest data integrity occurs immediately before the graphics resources are released by <code>GdipDisposeImage</code>.</p>
+<p>The first step was to confirm the loading of the necessary libraries in the process, validating the execution context.</p>
+<p>![[windbg-loaded-libraries.png | WinDbg loaded libraries]]</p>
+<p>A breakpoint was then set on the function responsible for releasing the image.</p>
+<p>![[gdip-dispose-breakpoint.png | GdipDisposeImage breakpoint]]</p>
+<p>The call stack at the breakpoint confirmed that execution was within the expected flow, with <code>GdipDisposeImage</code> being called from <code>sqlite3+0x309d</code>.</p>
+<p>![[gdip-dispose-call-stack.png | GdipDisposeImage call stack]]</p>
+<p>With the breakpoint hit, register inspection revealed that <code>RDX</code> pointed to <code>0x0000019f7e5f0000</code>, the memory address where the payload was already fully assembled.</p>
+<p>![[payload-register-state.png | Register state with payload address]]</p>
+<p>The resulting dump confirmed 340 KB of Java bytecode in a <strong>RW</strong> (read-write) memory region.</p>
+<p>![[java-bytecode-dump.png | Assembled Java bytecode dump]]</p>
+<p>By placing the breakpoint on <code>GdipDisposeImage</code> immediately after the pixel processing loop completed, it was possible to wait for the extraction routine to finish and perform the memory dump at the exact moment the Java bytecode was fully assembled.</p>
+<p>This maneuver was essential to neutralize the self-destruction routine identified in the malware code, which executes a <strong>secure wipe</strong> of the bytes in memory immediately after use, designed to prevent artifact recovery.</p>
+<h2 id="payload-lifetime-and-forensic-implications">Payload Lifetime and Forensic Implications<a aria-hidden="true" tabindex="-1" href="#payload-lifetime-and-forensic-implications"><span class="icon icon-link"></span></a></h2>
+<p>What makes this operation effective against forensic analysis is the short lifetime of the payload in raw data memory. Once the bytecode is handed to the JVM, execution context transitions across three stages.</p>
+<p><strong>JVM Abstraction.</strong> When the class is registered for execution, the JVM maps raw bytecode into internal runtime structures. At that point, the original extraction buffer is no longer required for normal control flow.</p>
+<p><strong>Adaptive Execution (Interpreter and JIT).</strong> The JVM may execute the class through interpretation and progressively compile hot paths into native code. This further decouples runtime behavior from the original extracted byte sequence.</p>
+<p><strong>Post-Execution Evasion.</strong> In parallel, the loader performs a secure wipe of the extraction buffer and sensitive path/string artifacts.</p>
+<p>As a result, the malware remains active inside the JVM while analyst visibility into the original bytecode artifact is significantly reduced. The class is not literally invisible, but the recovery window becomes very narrow and highly timing-dependent, with the pristine payload still preserved only inside the steganographic carrier image in game assets.</p>
+<p>Without the dump performed in the precise interval between buffer assembly and JVM integration, recovery of the artifact would have been nearly impossible.</p>
+<h2 id="extracted-java-class-analysis">Extracted Java Class Analysis<a aria-hidden="true" tabindex="-1" href="#extracted-java-class-analysis"><span class="icon icon-link"></span></a></h2>
+<p>After successful extraction of the <code>.class</code> file from memory, static analysis via decompilation revealed a scenario of <strong>aggressive obfuscation</strong>. The artifact employs advanced techniques to prevent code readability and defeat control flow analysis.</p>
+<p>![[skidfuscator-obfuscated-class.png | Skidfuscator-obfuscated Java class]]</p>
+<p>The presence of a <code>nothing_to_see_here</code> constant containing ASCII art (a “Rick Astley” representation) within the static block is a characteristic signature of <strong>Skidfuscator</strong>, a high-complexity Java obfuscation engine that, at the time of this writing, has no publicly available deobfuscator.</p>
+<p>Unlike simple obfuscators that merely rename variables, Skidfuscator is designed with a focus on <strong>resilience against reverse engineering</strong>. Its defenses include non-linear control flow through fragmented logic blocks with opaque arithmetic, and homoglyph identifiers using visually ambiguous characters (<code>I</code>, <code>l</code>, <code>1</code>) to impede manual analysis.</p>
+<p>![[skidfuscator-ascii-art.png | Skidfuscator ASCII art signature]]</p>
+<p>Detection of this protection confirms that the malware developer invested in defeating conventional analysis, requiring dynamic analysis or emulation techniques to understand the class’s actual behavior.</p>
+<h2 id="artifact-reconstruction">Artifact Reconstruction<a aria-hidden="true" tabindex="-1" href="#artifact-reconstruction"><span class="icon icon-link"></span></a></h2>
+<p>Extracting raw data from memory requires restoring the <code>.class</code> file integrity to enable dynamic monitoring. This process presents two main obstacles, bytecode obfuscation and memory alignment issues.</p>
+<p>The first obstacle is <strong>duplicate method obfuscation</strong>. Standard execution of the dumped file fails with <code>java.lang.ClassFormatError: Duplicate method name</code>. This technique deliberately violates JVM specifications by inserting methods with identical names and signatures, blocking verification and conventional decompilation.</p>
+<p>![[classformat-error-duplicate.png | ClassFormatError from duplicate methods]]</p>
+<p>However, Java game launchers are frequently started with <code>-Xverify:none</code> or <code>-noverify</code> flags to bypass bytecode verification that would conflict with legitimate mod and patch modifications. If the original process’s JVM was started with this configuration, it accepts the obfuscated bytecode without restrictions. This explains why the class executes correctly in the target process and makes the use of this flag indispensable for reproducing execution in a controlled environment.</p>
+<p>The second obstacle is <strong>trailing padding</strong>. Unlike files on disk, memory buffers frequently contain null bytes beyond the end of the actual file structure. Since the JVM requires the exact binary size to load a class, any extra data causes <code>Extra bytes at the end of class file</code>, even with verification disabled.</p>
+<p>![[trailing-null-bytes-removal.png | Trailing null bytes removal]]</p>
+<p>The solution involves manual removal of <strong>trailing null bytes</strong> identified through hexadecimal analysis, restoring the correct <code>.class</code> file alignment.</p>
+<p>After alignment adjustment and verification suppression, the payload was validated and executed successfully.</p>
+<p>![[payload-execution-success.png | Successful payload execution]]</p>
+<h2 id="sandbox-analysis-and-c2-communication">Sandbox Analysis and C2 Communication<a aria-hidden="true" tabindex="-1" href="#sandbox-analysis-and-c2-communication"><span class="icon icon-link"></span></a></h2>
+<p>Controlled execution of the malicious Java class in a sandbox environment allowed observation of the full payload behavior, confirming and expanding the hypotheses raised during static analysis.</p>
+<p>The complete installer chain was not executed directly inside ANY.RUN. The original setup packages were multi-gigabyte files, the later stages depended on specific on-disk paths for both the DLL and the PNG payload, and the native loader expected the target Java process to be named <code>java-original.exe</code>. The sandbox-provided Java runtime was also limited to Java 8, which was not suitable for reliably executing the recovered Java stage.</p>
+<p>To reproduce the final stage under controlled conditions, the analysis used a minimal execution harness containing a compatible OpenJDK runtime and the extracted class under the expected layout: <code>latest\bin\lIlIllIlIlI.class</code> and <code>latest\bin\java-original.exe</code>. The harness launched the payload with <code>latest\bin\java-original.exe -noverify -cp latest\bin lIlIllIlIlI</code>. This setup was used strictly to observe the Java-stage runtime behavior and C2 communication. It does not represent the original delivery or installation flow.</p>
+<p>The first relevant data point is the score assigned by the <strong>ANY.RUN</strong> sandbox to the <code>java-original.exe</code> process, <strong>10 out of 100, with no verdict</strong>. This number does not represent a failure of the analysis environment. It is practical confirmation that the evasion architecture documented in the previous sections works as designed. A legitimate Java process, executing obfuscated bytecode injected via JNI, within an established trust context, does not trigger conventional detection mechanisms.</p>
+<p>![[anyrun-score.png | ANY.RUN score 10/100]]</p>
+<p>Immediately after initialization, the process registers three artifacts on disk, all related to persistence infrastructure and input hooking.</p>
+<p>![[malicious-file-artifacts.png | Malicious file system artifacts]]</p>
+<p>The file <code>jnh40</code> is extracted to <code>C:\Users\admin\.plugins\libraries</code>, a hidden directory created by the malware itself. The file <code>JNativeHook-2.1.0.x86_64.dll</code> is deposited in <code>%TEMP%</code>. Both are components of the open-source <strong>JNativeHook</strong> library, which provides system-level global keyboard and mouse hooking capabilities independent of window focus.</p>
+<p>![[jnativehook-globalscreen.png | GlobalScreen event listeners]]</p>
+<p>Analysis of the <code>jnh40</code> library confirms the <code>org.jnativehook</code> package with the <code>GlobalScreen</code> class, which registers global listeners for <code>NativeKeyEvent</code> and <code>NativeMouseEvent</code>. This is the campaign’s <strong>keylogging</strong> and <strong>mouse monitoring</strong> implementation, where every keystroke and click performed by the user, in any application, is captured by the global hook registered in the game’s JVM.</p>
+<p>With the hook established, the process initiates communication with the command and control infrastructure. The first packet transmitted to the C2 is the classic RAT registration beacon, following a structured victim identification protocol.</p>
+<p>![[c2-registration-beacon.png | C2 registration beacon]]</p>
+<p>The beacon transmits the compromised machine’s username, operating system, host process name and PID, and language and region settings. After victim registration, the client sends the hooking module load confirmation.</p>
+<p>![[c2-plugin-confirmation.png | Plugin load confirmation]]</p>
+<p>The message confirms that the <strong>JNativeHook</strong> plugin was initialized successfully. The hash <code>de6cf300c801226d4b19e4fdc258975e</code> corresponds to the MD5 of the <code>jnh40</code> module extracted to <code>C:\Users\admin\.plugins\libraries</code>, functioning as an integrity check of the loaded component. The presence of this verification mechanism indicates a C2 infrastructure with active control over modules deployed to victims.</p>
+<p>Network traffic analysis reveals the two connections established by the process.</p>
+<p>![[c2-tcp-connections.png | C2 TCP connections]]</p>
+<p>The first connection, to <code>172.66.171.73:443</code>, corresponds to the domain <code>pastebin.com</code> via Cloudflare, likely used for configuration retrieval or staging of additional modules. Since the connection is encrypted over HTTPS, only the destination was observable; the specific Pastebin URL and its contents could not be determined from the captured traffic. The second connection, to <code>212.64.210.140</code> on port <code>1336</code>, is allocated to the <strong>SUNUCUN</strong> ASN, a Turkish hosting provider.</p>
+<p>This is the primary C2 connection and constitutes infrastructure evidence of campaign activity through hosting in Turkey; on its own, this does not provide conclusive attribution to Turkey-based threat actors.</p>
+<h2 id="conclusion">Conclusion<a aria-hidden="true" tabindex="-1" href="#conclusion"><span class="icon icon-link"></span></a></h2>
+<p>This campaign demonstrates a rare example of holistic evasion engineering. Every technique employed exists to eliminate a specific detection layer, culminating in fully fileless Java execution within a trusted game process where distinguishing malicious code from legitimate execution becomes significantly harder for memory scanners, EDRs, and forensic tooling.</p>
+<p>The PE Import Table patching neutralizes application-level integrity verification. The trojanized Lua library provides a legitimate execution context for the stager. PIC shellcode executing from the <code>.text</code> section avoids the memory allocation artifacts that modern EDRs monitor. Steganography within an official game asset prevents disk-based signature detection. JNI injection into an already-running JVM eliminates process creation artifacts. The post-execution bytecode wipe destroys the forensic evidence window.</p>
+<p>None of these techniques are new individually. The sophistication here lies in their composition. A carefully layered sequence where each technique exists specifically to cover the detection gap that the previous one leaves exposed.</p>
+<p>As defenses evolve, campaigns like this one make it clear that detection will need to keep pace, though how to achieve that without generating excessive false positives remains an open problem.</p>
+<h2 id="mitre-attck-mapping">MITRE ATT&#x26;CK Mapping<a aria-hidden="true" tabindex="-1" href="#mitre-attck-mapping"><span class="icon icon-link"></span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Tactic</th><th>Technique</th><th>ID</th><th>Description</th></tr></thead><tbody><tr><td>Resource Development</td><td>Acquire Infrastructure: Domains</td><td>T1583.001</td><td>Typosquatted domain mimicking official Hytale site</td></tr><tr><td>Initial Access</td><td>Drive-by Compromise</td><td>T1189</td><td>Fraudulent download page distributing trojanized installer</td></tr><tr><td>Execution</td><td>Native API</td><td>T1106</td><td>Dynamic resolution of LoadLibraryA, CreateRemoteThread</td></tr><tr><td>Execution</td><td>Command and Scripting Interpreter</td><td>T1059</td><td>Java bytecode execution via JNI within JVM</td></tr><tr><td>Persistence</td><td>DLL Side-Loading</td><td>T1574.002</td><td>PE Import Table patching on HytaleClient.exe to force loading of trojanized luah54.dll</td></tr><tr><td>Defense Evasion</td><td>Process Injection: DLL Injection</td><td>T1055.001</td><td>Injection of sqlite3.dll into java-original.exe via CreateRemoteThread</td></tr><tr><td>Defense Evasion</td><td>Obfuscated Files or Information: Steganography</td><td>T1027.003</td><td>Java payload hidden in PNG pixel data</td></tr><tr><td>Defense Evasion</td><td>Obfuscated Files or Information: Software Packing</td><td>T1027.002</td><td>Skidfuscator obfuscation on Java class</td></tr><tr><td>Defense Evasion</td><td>Masquerading: Match Legitimate Name</td><td>T1036.005</td><td>DLLs named after legitimate libraries (sqlite3, luah54)</td></tr><tr><td>Defense Evasion</td><td>Indicator Removal: File Deletion</td><td>T1070.004</td><td>Secure wipe of bytecode buffer post-execution</td></tr><tr><td>Collection</td><td>Input Capture: Keylogging</td><td>T1056.001</td><td>JNativeHook GlobalScreen capturing keystrokes and mouse events</td></tr><tr><td>Command and Control</td><td>Application Layer Protocol</td><td>T1071</td><td>TCP connection to C2 on non-standard port 1336</td></tr><tr><td>Command and Control</td><td>Web Service</td><td>T1102</td><td>Pastebin used for potential configuration staging</td></tr></tbody></table>
+<h2 id="indicators-of-compromise">Indicators of Compromise<a aria-hidden="true" tabindex="-1" href="#indicators-of-compromise"><span class="icon icon-link"></span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Type</th><th>Value</th><th>Description</th></tr></thead><tbody><tr><td>SHA256</td><td><code>9229e9cf6e19ec75c2bd8dd7faa373bf074e54d44880a1ba339e6e55f2b1ed77</code></td><td>Initial NSIS installer</td></tr><tr><td>SHA256</td><td><code>ac4b06dfe51d7c9016a861ae2470fe58ee34ce46d0b930030a1b3e46c9207003</code></td><td>Trojanized Lua library (luah54.dll)</td></tr><tr><td>SHA256</td><td><code>dfe791cd80e9b102159e711ee5266f55728d13ebad09c57ec666289f2973fb00</code></td><td>PIC shellcode carrier (sqlite3.dll)</td></tr><tr><td>SHA256</td><td><code>e36166d0c8dac3b454583d0c823ac0043422a4f2ad6343a1d58da1c75f44a5fe</code></td><td>PE Import Table patched executable (HytaleClient.exe)</td></tr><tr><td>File</td><td><code>5e7a961d5e334000189a2a78_6.png</code></td><td>Steganography carrier image</td></tr><tr><td>Process</td><td><code>java-original.exe</code></td><td>JNI injection target process</td></tr><tr><td>Path</td><td><code>%AppData%\Roaming\sanasol\f2p-evo\data\games\15faf9c0-...\Client\</code></td><td>Installation directory</td></tr><tr><td>Path</td><td><code>C:\Users\&#x3C;user>\.plugins\libraries\jnh40</code></td><td>Hidden keylogger module</td></tr><tr><td>File</td><td><code>JNativeHook-2.1.0.x86_64.dll</code></td><td>Global hooking library</td></tr><tr><td>MD5</td><td><code>de6cf300c801226d4b19e4fdc258975e</code></td><td>jnh40 module hash</td></tr><tr><td>MD5</td><td><code>0285a117e67739776220c34ef08b2d43</code></td><td>JNativeHook DLL hash</td></tr><tr><td>MD5</td><td><code>c8366ae350e7019aefc9d1e6e6a498c6</code></td><td>Manipulated RSA key</td></tr><tr><td>IP</td><td><code>212.64.210.140</code></td><td>Primary C2 (ASN: SUNUCUN, Turkey)</td></tr><tr><td>IP</td><td><code>172.66.171.73</code></td><td>Cloudflare / pastebin.com</td></tr></tbody></table>
+<h2 id="tools-used">Tools Used<a aria-hidden="true" tabindex="-1" href="#tools-used"><span class="icon icon-link"></span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Tool</th><th>Purpose</th></tr></thead><tbody><tr><td>Binary Ninja</td><td>Static analysis of native code across all DLLs and shellcode</td></tr><tr><td>ImHex</td><td>Hex-level comparison and removal of trailing bytes from dumped Java class</td></tr><tr><td>WinDbg</td><td>Setting breakpoints and dumping the Java class payload from memory</td></tr><tr><td>jadx-gui</td><td>Decompilation and analysis of the extracted Java bytecode</td></tr><tr><td>PE-Bear</td><td>Import Directory Table comparison between legitimate and modified binaries</td></tr><tr><td>Process Monitor</td><td>DLL loading analysis and call stack inspection</td></tr><tr><td>ANY.RUN</td><td>Dynamic analysis and sandbox execution of the extracted Java class</td></tr><tr><td>VirusTotal</td><td>Detection-rate validation for <code>luah54.dll</code> and <code>sqlite3.dll</code></td></tr></tbody></table>  </article> <div class="post__footer" data-astro-cid-jj6gr7j4> <div class="footer-grid" data-astro-cid-jj6gr7j4> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Published</span> <span class="footer-value" data-astro-cid-jj6gr7j4> April 7, 2026 </span> <span class="footer-subtext" data-astro-cid-jj6gr7j4>21 min read • 4145 words</span> </div> <div class="footer-col" data-astro-cid-jj6gr7j4> <span class="footer-label" data-astro-cid-jj6gr7j4>Written By</span> <div class="footer-author" data-astro-cid-jj6gr7j4> <img class="footer-avatar" src="https://avatars.githubusercontent.com/u/124220594?v=4" alt="Vithor avatar" data-astro-cid-jj6gr7j4> <span class="footer-value" data-astro-cid-jj6gr7j4>Vithor</span> </div> </div> </div> </div> </article> </div> <script type="module" src="/assets/hoisted.js"></script> <script>(function(){const webAssetMap = {"drawing 2026-02-20 00.00.48.excalidraw 1.dkem-zja.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","drawing 2026-02-20 00.00.48.excalidraw 1.png":"/_astro/Drawing 2026-02-20 00.00.48.excalidraw 1.DkeM-zja.png","hytale-site.png":"/_astro/Hytale-site.WArzXDzQ.png","opocl8j.png":"/_astro/OPocl8J.DB4sm_Ju.png","pasted image 20260422174950.png":"/_astro/Pasted image 20260422174950.De5DijAk.png","pasted image 20260422174957.png":"/_astro/Pasted image 20260422174957.CLKWtQ_B.png","pasted image 20260422175306.png":"/_astro/Pasted image 20260422175306.DSgsY8-P.png","pasted image 20260422175329.png":"/_astro/Pasted image 20260422175329.B7LXNXbd.png","pasted image 20260422175412.png":"/_astro/Pasted image 20260422175412.BAng7CLU.png","pasted image 20260422175637.png":"/_astro/Pasted image 20260422175637.BW7lRa-0.png","pasted image 20260422175910.png":"/_astro/Pasted image 20260422175910.Bhdak3EL.png","pasted image 20260422175926.png":"/_astro/Pasted image 20260422175926.BDjP3UPN.png","pasted image 20260422180418.png":"/_astro/Pasted image 20260422180418.CHOMSox5.png","pasted image 20260422180434.png":"/_astro/Pasted image 20260422180434.DPCCixIR.png","anyrun-score.png":"/_astro/anyrun-score.DZZodPNl.png","c2-plugin-confirmation.png":"/_astro/c2-plugin-confirmation.D-Mg2rFb.png","c2-registration-beacon.png":"/_astro/c2-registration-beacon.aktermma.png","c2-tcp-connections.png":"/_astro/c2-tcp-connections.BjQ9zo7k.png","callback2_0_diagram.png":"/_astro/callback2_0_diagram.rlCLpWWO.png","classformat-error-duplicate.png":"/_astro/classformat-error-duplicate.BY8lZQFg.png","dll-injection-loop.png":"/_astro/dll-injection-loop.BFrvO5Ph.png","dllmain-to-beginthread.png":"/_astro/dllmain-to-beginthread.BabeDkB4.png","dllmain-to-createthread.png":"/_astro/dllmain-to-createthread.CfUkcik1.png","dmca-takedown-notice.png":"/_astro/dmca-takedown-notice.CHnmuelm.png","dynamic-api-resolution.png":"/_astro/dynamic-api-resolution.iyES2fPg.png","f2p-launcher-play-button.png":"/_astro/f2p-launcher-play-button.BZofspnP.png","gdip-dispose-breakpoint.png":"/_astro/gdip-dispose-breakpoint.BPyAOFhP.png","gdip-dispose-call-stack.png":"/_astro/gdip-dispose-call-stack.Cd1GIJSZ.png","gdiplus-steganography.png":"/_astro/gdiplus-steganography.BBZjfh_n.png","hytale-diagram-banner-3x.png":"/_astro/hytale-diagram-banner-3x.D9s6PuOs.png","hytale-game-running.png":"/_astro/hytale-game-running.D6qGXJpz.png","image-6.png":"/_astro/image-6.Cgr6oDif.png","image_paranoid.png":"/_astro/image_paranoid.BdhBf3mF.png","import-table-comparison.png":"/_astro/import-table-comparison.C2lEWbdu.png","inno-setup-stage2.png":"/_astro/inno-setup-stage2.DaUcjtEX.png","installer-comparison.png":"/_astro/installer-comparison.gzLwVWL7.png","integrity-verification-error.png":"/_astro/integrity-verification-error.P_3cswWq.png","invalid-digital-signature.png":"/_astro/invalid-digital-signature.rHxp6eSK.png","java-bytecode-dump.png":"/_astro/java-bytecode-dump.y3qZQxQT.png","jnativehook-globalscreen.png":"/_astro/jnativehook-globalscreen.CMqCTa4v.png","loadlibrary-call-stack.png":"/_astro/loadlibrary-call-stack.DZUZYJxc.png","luah54-string-references.png":"/_astro/luah54-string-references.BuRPMLzM.png","luah54-virustotal.png":"/_astro/luah54-virustotal.D1WZOXnk.png","malicious-file-artifacts.png":"/_astro/malicious-file-artifacts.BOLmsyMo.png","payload-execution-success.png":"/_astro/payload-execution-success.BGtaZ2Co.png","payload-register-state.png":"/_astro/payload-register-state.CdzXLJ6g.png","pic-shellcode-text-section.png":"/_astro/pic-shellcode-text-section.DaBjwcra.png","procmon-dll-loading.png":"/_astro/procmon-dll-loading.Cu8xfata.png","skidfuscator-ascii-art.png":"/_astro/skidfuscator-ascii-art.Cq9FiBTA.png","skidfuscator-obfuscated-class.png":"/_astro/skidfuscator-obfuscated-class.DbamIPKP.png","sluvimd.png":"/_astro/sluvimD.BLBHNB38.png","sqlite3-virustotal.png":"/_astro/sqlite3-virustotal.QiXrQqf2.png","stager-path-resolution.png":"/_astro/stager-path-resolution.CCe8M2pQ.png","steganography-carrier.png":"/_astro/steganography-carrier.CRwdqBav.png","trailing-null-bytes-removal.png":"/_astro/trailing-null-bytes-removal.ChhUIQwk.png","windbg-loaded-libraries.png":"/_astro/windbg-loaded-libraries.DZW-iomw.png"};
+
+      const WEB_ASSET_MAP = webAssetMap || {};
+
+      const resolveWebAsset = (rawName) => {
+        const key = (rawName || "").trim().toLowerCase();
+        if (!key) return "";
+        if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("/")) return rawName.trim();
+        return WEB_ASSET_MAP[key] || WEB_ASSET_MAP[key.replace(/^web\//, "")] || "";
+      };
+
+      const enhanceObsidianEmbeds = (root) => {
+        const nodes = Array.from(root.querySelectorAll("p"));
+        nodes.forEach((p) => {
+          if (p.closest(".inline-asset-row")) return;
+          const text = (p.textContent || "").trim();
+          const match = text.match(/^!\[\[(.+?)\]\]$/);
+          if (!match) return;
+
+          const payload = match[1];
+          const parts = payload.split("|");
+          const file = (parts[0] || "").trim();
+          const caption = (parts.slice(1).join("|") || "").trim();
+          const src = resolveWebAsset(file);
+          if (!src) return;
+
+          const figure = document.createElement("figure");
+          figure.className = "obsidian-embed";
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = caption || file;
+          img.loading = "lazy";
+          figure.appendChild(img);
+
+          if (caption) {
+            const cap = document.createElement("figcaption");
+            cap.textContent = caption;
+            figure.appendChild(cap);
+          }
+
+          p.replaceWith(figure);
+        });
+      };
+
+      const ensureImageModal = () => {
+        let overlay = document.getElementById("image-modal-overlay");
+        if (overlay) return overlay;
+
+        overlay = document.createElement("div");
+        overlay.id = "image-modal-overlay";
+        overlay.className = "image-modal-overlay";
+        overlay.innerHTML = '<div class="image-modal-card"><img class="image-modal-image" alt="Expanded media" /></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) overlay.classList.remove("open");
+        });
+
+        return overlay;
+      };
+
+      window.openImageModal = (src, alt = "image") => {
+        const overlay = ensureImageModal();
+        const img = overlay.querySelector("img");
+        if (!img) return;
+        img.src = src;
+        img.alt = alt;
+        overlay.classList.add("open");
+      };
+
+      window.copyCode = async (button) => {
+        const row = button.closest(".inline-asset-row");
+        const code = row?.querySelector("pre code")?.textContent ?? "";
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          const previous = button.textContent;
+          button.textContent = "[ COPIED ]";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch {
+          button.textContent = "[ FAILED ]";
+        }
+      };
+
+      const getImageFormat = (src) => {
+        const clean = src.split("?")[0].split("#")[0].toLowerCase();
+        const ext = clean.split(".").pop();
+        if (!ext || ext === clean) return "IMG";
+        if (ext === "jpeg") return "JPG";
+        return ext.toUpperCase();
+      };
+
+      const getYouTubeVideoId = (rawUrl) => {
+        try {
+          const url = new URL(rawUrl);
+          const host = url.hostname.replace(/^www\./, "").toLowerCase();
+          if (host === "youtu.be") {
+            return url.pathname.replace(/^\//, "").split("/")[0] || "";
+          }
+          if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+            if (url.pathname === "/watch") {
+              return url.searchParams.get("v") || "";
+            }
+            if (url.pathname.startsWith("/embed/")) {
+              return url.pathname.split("/embed/")[1]?.split("/")[0] || "";
+            }
+            if (url.pathname.startsWith("/shorts/")) {
+              return url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+            }
+          }
+        } catch {
+          return "";
+        }
+        return "";
+      };
+
+      const enhanceMarkdownCallouts = (root) => {
+        const validTypes = ["WARNING", "INFO", "BUG", "NOTE", "TIP"];
+        const iconByType = {
+          WARNING: "⚠",
+          INFO: "ℹ",
+          BUG: "🐞",
+          NOTE: "✎",
+          TIP: "✓",
+        };
+
+        const paragraphs = Array.from(root.querySelectorAll("p"));
+        paragraphs.forEach((p) => {
+          if (p.closest(".md-callout")) return;
+          const first = p.querySelector(":scope > strong");
+          if (!first) return;
+
+          const rawLabel = (first.textContent || "").trim();
+          const upper = rawLabel.toUpperCase();
+          const type = validTypes.find((t) => upper.includes(t));
+          if (!type) return;
+
+          const clone = p.cloneNode(true);
+          const strong = clone.querySelector("strong");
+          if (!strong) return;
+          strong.remove();
+
+          if (clone.firstChild && clone.firstChild.nodeType === Node.TEXT_NODE) {
+            clone.firstChild.textContent = clone.firstChild.textContent.replace(/^[\s\u00a0:：\-]+/, "");
+          }
+
+          const contentHtml = clone.innerHTML.trim();
+          if (!contentHtml) return;
+
+          const box = document.createElement("div");
+          box.className = `md-callout md-callout--${type.toLowerCase()}`;
+          box.innerHTML = `
+            <div class="md-callout__icon" aria-hidden="true">${iconByType[type] || "•"}</div>
+            <div class="md-callout__content"><p>${contentHtml}</p></div>
+          `;
+
+          p.replaceWith(box);
+        });
+      };
+
+      const enhanceMarkdownTables = (root) => {
+        const tables = Array.from(root.querySelectorAll("table"));
+        tables.forEach((table) => {
+          if (table.closest(".table-scroll")) return;
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-scroll";
+          table.parentNode?.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      };
+
+      const wrapWithSidecar = (target, desktopSidecar, mobileBar, rowClass, areaClass) => {
+        if (!target || target.closest(".inline-asset-row")) return null;
+        const row = document.createElement("div");
+        row.className = `inline-asset-row ${rowClass} group`;
+        const content = document.createElement("div");
+        content.className = `asset-content asset-area ${areaClass}`;
+        target.parentNode?.insertBefore(row, target);
+        row.appendChild(desktopSidecar);
+        row.appendChild(mobileBar);
+        row.appendChild(content);
+        content.appendChild(target);
+        return row;
+      };
+
+      const enhanceProseBlocks = (root) => {
+        const images = Array.from(root.querySelectorAll("img"));
+        images.forEach((img) => {
+          if (!img.src || img.closest(".inline-asset-row")) return;
+          const youtubeId = getYouTubeVideoId(img.src);
+          if (youtubeId) {
+            const captionText = (img.alt || "").trim();
+            const showCaption = captionText && captionText.toLowerCase() !== "video";
+
+            const figure = document.createElement("figure");
+            figure.className = "video-embed";
+
+            const frame = document.createElement("div");
+            frame.className = "video-embed__frame";
+            frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+            figure.appendChild(frame);
+
+            if (showCaption) {
+              const caption = document.createElement("figcaption");
+              caption.textContent = captionText;
+              figure.appendChild(caption);
+            }
+
+            const parent = img.parentElement;
+            if (parent && parent.tagName === "P" && parent.childElementCount === 1 && (parent.textContent || "").trim() === "") {
+              parent.replaceWith(figure);
+            } else {
+              img.replaceWith(figure);
+            }
+            return;
+          }
+
+          const host = img;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--image";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label">${getImageFormat(img.src)}</div>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          if (!img.dataset.zoomBound) {
+            img.dataset.zoomBound = "true";
+            img.style.cursor = "zoom-in";
+            img.addEventListener("click", (event) => {
+              event.preventDefault();
+              window.openImageModal(img.src, img.alt || "image");
+            });
+          }
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--image";
+          mobileBar.innerHTML = `
+            <span>${getImageFormat(img.src)}</span>
+            <span class="mobile-topbar__divider">|</span>
+            <button type="button" class="asset-sidecar__button" title="Open image">[ VIEW ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", () => {
+            window.openImageModal(img.src, img.alt || "image");
+          });
+
+          wrapWithSidecar(host, sidecar, mobileBar, "image-wrapper inline-asset-row--image", "image-area");
+        });
+
+        const codeBlocks = Array.from(root.querySelectorAll("pre"));
+        codeBlocks.forEach((pre) => {
+          if (pre.closest(".inline-asset-row")) return;
+          const code = pre.querySelector("code")?.textContent ?? "";
+          const lines = code ? code.replace(/\n+$/, "").split("\n").length : 0;
+
+          const sidecar = document.createElement("div");
+          sidecar.className = "desktop-sidecar desktop-sidecar--code";
+          sidecar.innerHTML = `
+            <div class="asset-sidecar__label asset-sidecar__meta"><span>CODE</span><span class="asset-sidecar__divider">|</span><span>${lines}</span></div>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          sidecar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          const mobileBar = document.createElement("div");
+          mobileBar.className = "mobile-topbar mobile-topbar--code";
+          mobileBar.innerHTML = `
+            <span>CODE</span>
+            <span class="mobile-topbar__divider">|</span>
+            <span class="mobile-topbar__spacer">${lines}</span>
+            <button type="button" class="asset-sidecar__button" title="Copy code">[ COPY ]</button>
+          `;
+          mobileBar.querySelector("button")?.addEventListener("click", (event) => {
+            window.copyCode(event.currentTarget);
+          });
+
+          wrapWithSidecar(pre, sidecar, mobileBar, "code-wrapper inline-asset-row--code", "code-area");
+        });
+      };
+
+      const initPostChrome = () => {
+        const root = document.querySelector(".prose");
+        const tocToggle = document.querySelector(".toc-toggle");
+        const tocOverlay = document.querySelector(".toc-overlay");
+        const tocSidebar = document.querySelector(".toc-sidebar");
+        const tocContent = document.querySelector(".toc-content");
+        const closeBtn = document.querySelector(".close-btn");
+        const themeBtn = document.getElementById("theme-toggle-single");
+        const ruler = document.querySelector(".ruler-scrollbar");
+        const rulerIndicator = document.querySelector(".ruler-indicator");
+        const rulerValue = document.querySelector(".ruler-value");
+
+        if (themeBtn && !themeBtn.dataset.bound) {
+          themeBtn.dataset.bound = "true";
+          themeBtn.addEventListener("click", () => {
+            const isDark = document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+          });
+        }
+
+        if (!root || !tocToggle || !tocOverlay || !tocSidebar || !tocContent || !closeBtn) return;
+
+        enhanceObsidianEmbeds(root);
+        enhanceMarkdownCallouts(root);
+        enhanceMarkdownTables(root);
+        enhanceProseBlocks(root);
+
+        const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+        tocContent.innerHTML = "";
+        let minLevel = 6;
+
+        const items = headings
+          .map((heading, index) => {
+            if (!heading.id) heading.id = `heading-${index}`;
+            const level = Number(heading.tagName.replace("H", ""));
+            if (level < minLevel) minLevel = level;
+            return { id: heading.id, text: heading.textContent?.trim() ?? "", level, heading };
+          })
+          .filter((item) => item.text.length > 0);
+
+        const setOpen = (isOpen) => {
+          tocSidebar.classList.toggle("open", isOpen);
+          tocToggle.classList.toggle("open", isOpen);
+          tocOverlay.style.display = isOpen ? "block" : "none";
+        };
+
+        tocToggle.onclick = () => setOpen(!tocSidebar.classList.contains("open"));
+        closeBtn.onclick = () => setOpen(false);
+        tocOverlay.onclick = () => setOpen(false);
+
+        items.forEach((item) => {
+          const node = document.createElement("div");
+          node.className = "toc-item svelte-1r6e6jk";
+          node.style.paddingLeft = `${(item.level - minLevel) * 1.5 + 1.5}rem`;
+          node.innerHTML = '<div class="toc-item-inner svelte-1r6e6jk"><span class="caret-placeholder svelte-1r6e6jk"></span><span class="toc-text svelte-1r6e6jk"></span></div>';
+          const textNode = node.querySelector(".toc-text");
+          if (textNode) textNode.textContent = item.text;
+          node.addEventListener("click", () => {
+            const top = item.heading.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top, behavior: "smooth" });
+            if (window.innerWidth < 1024) setOpen(false);
+          });
+          tocContent.appendChild(node);
+        });
+
+        const tocNodes = Array.from(tocContent.querySelectorAll(".toc-item"));
+
+        const updateActiveHeading = () => {
+          let activeId = "";
+          for (let i = items.length - 1; i >= 0; i -= 1) {
+            const rect = items[i].heading.getBoundingClientRect();
+            if (rect.top <= 120) {
+              activeId = items[i].id;
+              break;
+            }
+          }
+          if (!activeId && items.length) activeId = items[0].id;
+
+          tocNodes.forEach((node, i) => {
+            node.classList.toggle("active", items[i].id === activeId);
+          });
+        };
+
+        const updateRuler = () => {
+          if (!rulerIndicator || !rulerValue) return;
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = max > 0 ? window.scrollY / max : 0;
+          rulerIndicator.style.top = `${Math.max(0, Math.min(100, progress * 100))}%`;
+          rulerValue.textContent = progress.toFixed(2);
+          rulerValue.classList.add("visible");
+          clearTimeout(window.__rulerTimer);
+          window.__rulerTimer = setTimeout(() => rulerValue.classList.remove("visible"), 800);
+        };
+
+        const onScroll = () => {
+          updateActiveHeading();
+          updateRuler();
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+
+        if (ruler && !ruler.dataset.bound) {
+          ruler.dataset.bound = "true";
+          ruler.addEventListener("mousedown", (event) => {
+            const rect = ruler.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+            const top = ratio * (document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        }
+
+        document.querySelector('[data-action="top"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="bottom"]')?.addEventListener("click", () => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        });
+        document.querySelector('[data-action="expand"]')?.addEventListener("click", () => {
+          setOpen(true);
+        });
+        document.querySelector('[data-action="collapse"]')?.addEventListener("click", () => {
+          setOpen(false);
+        });
+
+        onScroll();
+      };
+
+      initPostChrome();
+      document.addEventListener("astro:page-load", initPostChrome);
+    })();</script> </body> </html>
